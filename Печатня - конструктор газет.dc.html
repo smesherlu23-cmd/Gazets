@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=PT+Sans+Narrow:wght@400;700&family=Oswald:wght@500;600;700&family=UnifrakturMaguntia&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,700;1,6..96,400&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#0d0e0f; color:#e6e4e0; font-family:'IBM Plex Sans',sans-serif; -webkit-font-smoothing:antialiased; }
+  a { color:#C05B42; text-decoration:none; }
+  a:hover { color:#d9765d; }
+</style>
+</helmet>
+
+<div style="padding:56px 48px 96px;display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+
+  <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:28px">
+    <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#C05B42">Печатня / Pressroom · Windows · Flet</div>
+    <div style="font:600 34px/1.1 'IBM Plex Sans',sans-serif;letter-spacing:-0.01em;color:#f2f0ec">Конструктор игровых газет — дизайн интерфейса</div>
+    <div style="font:400 15px/1.5 'IBM Plex Sans',sans-serif;color:#8d9095;max-width:760px">Девять экранов: от списка проектов и бренда издания до экспорта. Интерфейс — нейтральный графит, гротеск; полоса — антиква и газетная сетка, как в предпросмотре так и в экспорте.</div>
+  </div>
+
+  <!-- 1 · СТАРТ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:16px"><span style="color:#C05B42">01</span> &nbsp;Старт / Projects</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="height:36px;background:#121314;border-bottom:1px solid #2a2c2f;display:flex;align-items:center;padding:0 12px;gap:12px">
+      <div style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#cfd2d4">Печатня</div>
+      <div style="font:400 12px/1 'IBM Plex Sans',sans-serif;color:#6f7275">Проекты</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:6px;align-items:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#6f7275">RU <span style="color:#3a3d41">|</span> <span style="color:#cfd2d4">EN</span></div>
+      <div style="display:flex;gap:14px;color:#6f7275;font:400 13px 'IBM Plex Sans',sans-serif;margin-left:10px">−&nbsp;□&nbsp;✕</div>
+    </div>
+    <div style="height:864px;display:flex">
+      <div style="width:230px;border-right:1px solid #26282b;background:#141516;padding:20px 16px;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Библиотека / Library</div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:3px;background:#232628;color:#f2f0ec;font:500 13px 'IBM Plex Sans',sans-serif;border-left:2px solid #C05B42">Все проекты <span style="margin-left:auto;color:#8d9095;font-weight:400">7</span></div>
+            <div style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:#b3b6b9;font:400 13px 'IBM Plex Sans',sans-serif">Издания <span style="margin-left:auto;color:#6f7275">3</span></div>
+            <div style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:#b3b6b9;font:400 13px 'IBM Plex Sans',sans-serif">Шаблоны сеток</div>
+            <div style="height:30px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:#b3b6b9;font:400 13px 'IBM Plex Sans',sans-serif">Пресеты оформления</div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Издания / Titles</div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <div style="height:28px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:#b3b6b9;font:400 13px 'IBM Plex Sans',sans-serif">Вечерний вестник</div>
+            <div style="height:28px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:#b3b6b9;font:400 13px 'IBM Plex Sans',sans-serif">Голос дока</div>
+            <div style="height:28px;display:flex;align-items:center;padding:0 10px;border-radius:3px;color:#b3b6b9;font:400 13px 'IBM Plex Sans',sans-serif">Бюллетень Управы</div>
+          </div>
+        </div>
+        <div style="margin-top:auto;font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:#5c5f62">Файлы проектов лежат в папке<br />Документы / Печатня</div>
+      </div>
+
+      <div style="flex:1;padding:32px 36px;display:flex;flex-direction:column;gap:26px;min-width:0">
+        <div style="display:flex;align-items:flex-end;gap:20px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:600 26px/1.1 'IBM Plex Sans',sans-serif;color:#f2f0ec">Проекты</div>
+            <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#8d9095">Последнее изменение — сверху</div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 13px 'IBM Plex Sans',sans-serif">Открыть файл…</div>
+          <div style="height:32px;padding:0 16px;display:flex;align-items:center;gap:8px;background:#C05B42;border-radius:3px;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif">＋ Новый выпуск</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
+          <div style="background:#1e2022;border:1px solid #C05B42;border-radius:4px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="height:190px;background:#efe9db;padding:12px 10px;display:flex;flex-direction:column;gap:5px">
+              <div style="font:700 13px/1 'Old Standard TT',serif;color:#201c16;text-align:center;letter-spacing:.04em">ВЕЧЕРНИЙ ВЕСТНИК</div>
+              <div style="height:1px;background:#201c16"></div>
+              <div style="height:1px;background:#201c16;margin-top:1px"></div>
+              <div style="font:700 9px/1.15 'Old Standard TT',serif;color:#201c16;margin-top:3px">Ночной обвал в Нижнем доке</div>
+              <div style="display:flex;gap:5px;flex:1;min-height:0">
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;padding-top:2px">
+                  <div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0;width:70%"></div>
+                  <div style="height:26px;background:repeating-linear-gradient(135deg,#cdc6b6 0 3px,#dcd6c8 3px 6px);margin:3px 0"></div>
+                  <div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0;width:55%"></div>
+                </div>
+                <div style="width:1px;background:#cbc4b4"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:2px;padding-top:2px">
+                  <div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0;width:80%"></div><div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0"></div><div style="height:2px;background:#b9b1a0;width:40%"></div>
+                  <div style="height:18px;border:1px solid #a79f8e;margin-top:4px"></div>
+                </div>
+              </div>
+            </div>
+            <div style="padding:12px 12px 14px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+              <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Вечерний вестник, № 14</div>
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">4 полосы · 9 статей · сегодня, 19:42</div>
+            </div>
+          </div>
+
+          <div style="background:#1e2022;border:1px solid #2b2e31;border-radius:4px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="height:190px;background:#e7e2d6;padding:12px 10px;display:flex;flex-direction:column;gap:5px">
+              <div style="font:700 17px/1 'Oswald',sans-serif;color:#1a1a1a;text-align:center">ГОЛОС ДОКА</div>
+              <div style="height:3px;background:#1a1a1a"></div>
+              <div style="font:700 14px/1.05 'Oswald',sans-serif;color:#1a1a1a;margin-top:4px">ОНИ ЗНАЛИ!</div>
+              <div style="height:54px;background:repeating-linear-gradient(135deg,#c6c0b2 0 3px,#d6d0c2 3px 6px);margin-top:2px"></div>
+              <div style="display:flex;flex-direction:column;gap:2px;margin-top:4px">
+                <div style="height:2px;background:#b0a998"></div><div style="height:2px;background:#b0a998"></div><div style="height:2px;background:#b0a998"></div><div style="height:2px;background:#b0a998;width:60%"></div>
+              </div>
+            </div>
+            <div style="padding:12px 12px 14px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+              <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Голос дока, № 3</div>
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">1 полоса · 5 статей · вчера</div>
+            </div>
+          </div>
+
+          <div style="background:#1e2022;border:1px solid #2b2e31;border-radius:4px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="height:190px;background:#eeebe1;padding:12px 10px;display:flex;flex-direction:column;gap:6px">
+              <div style="border:2px solid #23221e;padding:6px 4px;text-align:center">
+                <div style="font:700 10px/1.2 'PT Sans Narrow',sans-serif;letter-spacing:.1em;color:#23221e">БЮЛЛЕТЕНЬ УПРАВЫ</div>
+              </div>
+              <div style="font:700 9px/1.2 'PT Serif',serif;color:#23221e">О порядке выдачи пропусков</div>
+              <div style="display:flex;flex-direction:column;gap:3px;margin-top:2px">
+                <div style="height:2px;background:#bab5a7"></div><div style="height:2px;background:#bab5a7"></div><div style="height:2px;background:#bab5a7"></div><div style="height:2px;background:#bab5a7"></div><div style="height:2px;background:#bab5a7;width:45%"></div>
+              </div>
+              <div style="height:1px;background:#23221e;margin:4px 0"></div>
+              <div style="display:flex;flex-direction:column;gap:3px">
+                <div style="height:2px;background:#bab5a7"></div><div style="height:2px;background:#bab5a7"></div><div style="height:2px;background:#bab5a7;width:70%"></div>
+              </div>
+            </div>
+            <div style="padding:12px 12px 14px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+              <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Бюллетень Управы, № 1</div>
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">2 полосы · 6 статей · 3 дня назад</div>
+            </div>
+          </div>
+
+          <div style="background:#191b1c;border:1px dashed #3a3d41;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:266px">
+            <div style="width:34px;height:34px;border:1px solid #4a4d51;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#8d9095;font:400 18px 'IBM Plex Sans',sans-serif">＋</div>
+            <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Новый выпуск</div>
+            <div style="font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:#6f7275;text-align:center;max-width:150px">с нуля или на основе<br />сохранённого издания</div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Выпуски издания «Вечерний вестник» / Issues</div>
+          <div style="background:#1b1d1f;border:1px solid #2b2e31;border-radius:4px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:80px 1fr 160px 120px 130px;align-items:center;padding:9px 16px;border-bottom:1px solid #26282b;font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#6f7275">
+              <div>Номер</div><div>Главный материал</div><div>Дата выпуска</div><div>Полос</div><div>Изменён</div>
+            </div>
+            <div style="display:grid;grid-template-columns:80px 1fr 160px 120px 130px;align-items:center;padding:11px 16px;border-bottom:1px solid #222426;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">
+              <div style="color:#C05B42;font-weight:500">№ 14</div><div>Ночной обвал в Нижнем доке</div><div style="color:#8d9095">12 июня</div><div style="color:#8d9095">4</div><div style="color:#8d9095">19:42</div>
+            </div>
+            <div style="display:grid;grid-template-columns:80px 1fr 160px 120px 130px;align-items:center;padding:11px 16px;border-bottom:1px solid #222426;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">
+              <div style="color:#9a9da1">№ 13</div><div>Управа продлила комендантский час</div><div style="color:#8d9095">9 июня</div><div style="color:#8d9095">4</div><div style="color:#8d9095">9 июня</div>
+            </div>
+            <div style="display:grid;grid-template-columns:80px 1fr 160px 120px 130px;align-items:center;padding:11px 16px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">
+              <div style="color:#9a9da1">№ 12</div><div>Пропал катер «Ласточка»</div><div style="color:#8d9095">5 июня</div><div style="color:#8d9095">2</div><div style="color:#8d9095">6 июня</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2 · КАРТОЧКА ИЗДАНИЯ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">02</span> &nbsp;Карточка издания / Title card</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="height:36px;background:#121314;border-bottom:1px solid #2a2c2f;display:flex;align-items:center;padding:0 12px;gap:12px">
+      <div style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#cfd2d4">Печатня</div>
+      <div style="font:400 12px/1 'IBM Plex Sans',sans-serif;color:#6f7275">Новый выпуск · шаг 1 из 2</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:14px;color:#6f7275;font:400 13px 'IBM Plex Sans',sans-serif">−&nbsp;□&nbsp;✕</div>
+    </div>
+    <div style="height:864px;display:flex">
+      <div style="width:620px;padding:36px 40px;display:flex;flex-direction:column;gap:24px;border-right:1px solid #26282b">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font:600 24px/1.15 'IBM Plex Sans',sans-serif;color:#f2f0ec">Издание и выпуск</div>
+          <div style="font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:#8d9095;max-width:440px">Все поля — произвольный текст. Название и слоган запоминаются: следующий номер наследует шапку и оформление.</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Название издания / Title</div>
+            <div style="height:34px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #C05B42;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Вечерний вестник<span style="width:1px;height:17px;background:#C05B42;margin-left:2px"></span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Слоган / девиз</div>
+            <div style="height:34px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#dcdad6">Выходит ежедневно, кроме воскресных дней</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Номер</div>
+              <div style="height:34px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#dcdad6">№ 14</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Дата</div>
+              <div style="height:34px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#dcdad6">Среда, 12 июня</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Цена</div>
+              <div style="height:34px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#dcdad6">5 копеек</div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Город / место издания</div>
+              <div style="height:34px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#dcdad6">Порт-Аркадия</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Полос в выпуске</div>
+              <div style="height:34px;display:flex;align-items:center;padding:0 4px 0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px 'IBM Plex Sans',sans-serif;color:#dcdad6">4<div style="margin-left:auto;display:flex;gap:2px"><div style="width:24px;height:26px;border:1px solid #303337;border-radius:2px;display:flex;align-items:center;justify-content:center;color:#8d9095;font-size:12px">−</div><div style="width:24px;height:26px;border:1px solid #303337;border-radius:2px;display:flex;align-items:center;justify-content:center;color:#8d9095;font-size:12px">＋</div></div></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Декоративная рамка шапки / Masthead frame</div>
+            <div style="display:flex;gap:6px">
+              <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Без рамки</div>
+              <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.12);border-radius:3px;font:500 13px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Двойная линейка</div>
+              <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Наборный орнамент</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:auto;display:flex;align-items:center;gap:10px">
+          <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#6f7275;margin-right:auto">Проект сохраняется как JSON рядом с папкой изображений</div>
+          <div style="height:34px;padding:0 16px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 13px 'IBM Plex Sans',sans-serif">Отмена</div>
+          <div style="height:34px;padding:0 18px;display:flex;align-items:center;background:#C05B42;border-radius:3px;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif">Далее: сетка полосы</div>
+        </div>
+      </div>
+
+      <div style="flex:1;background:#121314;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:40px">
+        <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#6f7275;align-self:flex-start">Предпросмотр шапки / Masthead preview</div>
+        <div style="width:640px;background:#f2ede1;padding:30px 34px 26px;box-shadow:0 18px 40px rgba(0,0,0,.5)">
+          <div style="display:flex;justify-content:space-between;font:400 11px 'PT Serif',serif;color:#3a3227;letter-spacing:.04em;border-bottom:1px solid #3a3227;padding-bottom:6px">
+            <div>№ 14</div><div>ПОРТ-АРКАДIЯ, СРЕДА, 12 ИЮНЯ</div><div>ЦЕНА 5 КОПЕЕК</div>
+          </div>
+          <div style="text-align:center;padding:18px 0 10px">
+            <div style="font:700 44px/1 'Old Standard TT',serif;color:#181410;letter-spacing:.02em;white-space:nowrap">ВЕЧЕРНIЙ ВЕСТНИКЪ</div>
+            <div style="font:italic 400 14px/1 'Old Standard TT',serif;color:#453b2e;margin-top:10px">Выходитъ ежедневно, кроме воскресныхъ дней</div>
+          </div>
+          <div style="height:2px;background:#181410"></div>
+          <div style="height:1px;background:#181410;margin-top:2px"></div>
+          <div style="display:flex;gap:16px;margin-top:12px">
+            <div style="flex:1;font:400 10px/1.5 'PT Serif',serif;color:#3a3227;column-count:3;column-gap:12px;column-rule:1px solid #c3bba9">Редакция принимаетъ объявленiя ежедневно съ девяти часовъ утра. Рукописи не возвращаются. Подписка на мѣсяцъ — одинъ рубль двадцать копеекъ. Розничная продажа у разносчиковъ и въ лавкахъ Нижняго дока.</div>
+          </div>
+        </div>
+        <div style="font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:#6f7275;max-width:560px;text-align:center">Шрифты шапки берутся из выбранного пресета оформления и правятся вручную на панели «Типографика».</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 · ПРЕСЕТЫ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">03</span> &nbsp;Пресеты оформления / Style presets</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5);padding:32px 36px 36px;box-sizing:border-box">
+    <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:22px">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <div style="font:600 22px/1.15 'IBM Plex Sans',sans-serif;color:#f2f0ec">Стиль оформления полосы</div>
+        <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#8d9095">Пресет задаёт гарнитуры, кегли заголовков, толщину линеек и декор. Дальше всё правится вручную.</div>
+      </div>
+      <div style="flex:1"></div>
+      <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 13px 'IBM Plex Sans',sans-serif">Сохранить свой пресет</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px">
+      <div style="border:1px solid #C05B42;border-radius:4px;overflow:hidden;background:#1e2022">
+        <div style="height:300px;background:#f1ece0;padding:14px 12px;display:flex;flex-direction:column;gap:6px">
+          <div style="font:700 15px/1 'Old Standard TT',serif;text-align:center;color:#181410">ВЕСТНИКЪ</div>
+          <div style="height:1px;background:#181410"></div><div style="height:1px;background:#181410"></div>
+          <div style="font:700 11px/1.15 'Old Standard TT',serif;color:#181410;margin-top:4px">Ночной обвалъ въ Нижнемъ доке</div>
+          <div style="display:flex;gap:6px;flex:1;min-height:0">
+            <div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c;width:60%"></div><div style="height:34px;background:repeating-linear-gradient(135deg,#cbc4b3 0 3px,#dad4c5 3px 6px);margin:4px 0"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c;width:80%"></div></div>
+            <div style="width:1px;background:#c9c2b1"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c;width:70%"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c;width:45%"></div><div style="height:2px;background:#b6ae9c"></div></div>
+            <div style="width:1px;background:#c9c2b1"></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c"></div><div style="height:2px;background:#b6ae9c;width:55%"></div><div style="height:22px;border:1px solid #a29a89;margin-top:4px"></div><div style="height:2px;background:#b6ae9c;margin-top:4px"></div><div style="height:2px;background:#b6ae9c"></div></div>
+          </div>
+        </div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+          <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Классическая пресса</div>
+          <div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:#8d9095">Антиква, 6 колонок, тонкие линейки, буквица</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #2b2e31;border-radius:4px;overflow:hidden;background:#1e2022">
+        <div style="height:300px;background:#eae5d9;padding:14px 12px;display:flex;flex-direction:column;gap:6px">
+          <div style="font:700 19px/1 'Oswald',sans-serif;text-align:center;color:#141414">ГОЛОС ДОКА</div>
+          <div style="height:4px;background:#141414"></div>
+          <div style="font:700 24px/.95 'Oswald',sans-serif;color:#141414;margin-top:4px">ОНИ<br />ЗНАЛИ!</div>
+          <div style="height:78px;background:repeating-linear-gradient(135deg,#c4bdae 0 3px,#d5cfc0 3px 6px);margin-top:2px"></div>
+          <div style="display:flex;gap:6px;flex:1;min-height:0;margin-top:2px">
+            <div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="height:2px;background:#b0a897"></div><div style="height:2px;background:#b0a897"></div><div style="height:2px;background:#b0a897;width:70%"></div><div style="height:2px;background:#b0a897"></div></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="height:2px;background:#b0a897"></div><div style="height:2px;background:#b0a897"></div><div style="height:2px;background:#b0a897"></div><div style="height:2px;background:#b0a897;width:50%"></div></div>
+          </div>
+        </div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+          <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Таблоид</div>
+          <div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:#8d9095">Узкий гротеск, крупный крик, фото на полполосы</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #2b2e31;border-radius:4px;overflow:hidden;background:#1e2022">
+        <div style="height:300px;background:#f0eee6;padding:14px 12px;display:flex;flex-direction:column;gap:8px">
+          <div style="border:2px double #23221e;padding:8px 6px;text-align:center"><div style="font:700 11px/1.3 'PT Sans Narrow',sans-serif;letter-spacing:.12em;color:#23221e">БЮЛЛЕТЕНЬ<br />УПРАВЫ</div></div>
+          <div style="font:700 10px/1.2 'PT Serif',serif;color:#23221e;text-align:center">ОБЪЯВЛЕНIЕ № 41-б</div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-top:2px"><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5;width:40%"></div></div>
+          <div style="height:1px;background:#23221e;margin:2px 0"></div>
+          <div style="display:flex;flex-direction:column;gap:4px"><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5;width:75%"></div><div style="height:2px;background:#b8b3a5"></div><div style="height:2px;background:#b8b3a5;width:55%"></div></div>
+          <div style="margin-top:auto;display:flex;justify-content:flex-end"><div style="width:52px;height:52px;border:1px solid #8e8878;border-radius:50%;display:flex;align-items:center;justify-content:center;font:400 7px 'PT Sans Narrow',sans-serif;color:#8e8878;text-align:center">печать<br />управы</div></div>
+        </div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+          <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Официальный вестник</div>
+          <div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:#8d9095">Много воздуха, рамки, нумерация пунктов</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #2b2e31;border-radius:4px;overflow:hidden;background:#1e2022">
+        <div style="height:300px;background:#e8e0cd;padding:14px 12px;display:flex;flex-direction:column;gap:6px">
+          <div style="background:#1a1a1a;padding:6px 8px"><div style="font:700 13px/1 'Oswald',sans-serif;color:#e8e0cd;letter-spacing:.06em;text-align:center">ВПЕРЁДЪ!</div></div>
+          <div style="font:700 16px/1.05 'Oswald',sans-serif;color:#8a2a1c;margin-top:4px;text-transform:uppercase">Каждый доккеръ — на собранiе</div>
+          <div style="height:6px;background:#8a2a1c;width:60%"></div>
+          <div style="display:flex;gap:8px;flex:1;min-height:0;margin-top:4px">
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="height:2px;background:#a89f8a"></div><div style="height:2px;background:#a89f8a"></div><div style="height:2px;background:#a89f8a;width:70%"></div><div style="height:2px;background:#a89f8a"></div><div style="height:2px;background:#a89f8a;width:45%"></div><div style="height:30px;background:#1a1a1a;margin-top:6px"></div></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:4px"><div style="height:2px;background:#a89f8a"></div><div style="height:2px;background:#a89f8a;width:80%"></div><div style="height:2px;background:#a89f8a"></div><div style="height:2px;background:#a89f8a"></div><div style="height:2px;background:#a89f8a;width:55%"></div><div style="height:2px;background:#a89f8a"></div></div>
+          </div>
+          <div style="font:700 8px/1.2 'Oswald',sans-serif;color:#1a1a1a;letter-spacing:.08em;text-align:center;border-top:3px solid #8a2a1c;padding-top:5px">СОБРАНIЕ ВЪ ЧЕТВЕРГЪ, 7 ЧАСОВЪ</div>
+        </div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+          <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Партийная агитка</div>
+          <div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:#8d9095">Плашки, один акцентный цвет, лозунг вместо шапки</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #2b2e31;border-radius:4px;overflow:hidden;background:#1e2022">
+        <div style="height:300px;background:#e4ded0;padding:14px 12px;display:flex;flex-direction:column;gap:7px">
+          <div style="font:600 11px/1.2 'IBM Plex Mono',monospace;color:#2a2622;text-align:center;letter-spacing:.04em">*** СВОБОДНЫЙ ДОКЪ ***</div>
+          <div style="height:1px;background:#2a2622;opacity:.5"></div>
+          <div style="font:600 10px/1.35 'IBM Plex Mono',monospace;color:#2a2622;margin-top:2px">НЕ ВЕРЬТЕ ОФИЦIАЛЬНОЙ СВОДКЕ</div>
+          <div style="display:flex;flex-direction:column;gap:5px;margin-top:2px;opacity:.75"><div style="height:2px;background:#2a2622"></div><div style="height:2px;background:#2a2622"></div><div style="height:2px;background:#2a2622;width:65%"></div><div style="height:2px;background:#2a2622"></div><div style="height:2px;background:#2a2622;width:80%"></div><div style="height:2px;background:#2a2622"></div><div style="height:2px;background:#2a2622;width:35%"></div></div>
+          <div style="margin-top:auto;font:600 8px/1.4 'IBM Plex Mono',monospace;color:#2a2622;opacity:.8">ПЕРЕДАЙ ДАЛЬШЕ. НЕ ОСТАВЛЯЙ НА ВИДУ.</div>
+        </div>
+        <div style="padding:12px;display:flex;flex-direction:column;gap:4px;border-top:1px solid #2b2e31">
+          <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Подпольный листок</div>
+          <div style="font:400 11px/1.45 'IBM Plex Sans',sans-serif;color:#8d9095">Машинопись, одна колонка, неровная печать</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 · ШАБЛОНЫ СЕТКИ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">04</span> &nbsp;Шаблоны сетки полосы / Grid templates</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="height:36px;background:#121314;border-bottom:1px solid #2a2c2f;display:flex;align-items:center;padding:0 12px;gap:12px">
+      <div style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#cfd2d4">Печатня</div>
+      <div style="font:400 12px/1 'IBM Plex Sans',sans-serif;color:#6f7275">Новый выпуск · шаг 2 из 2 · полоса 1</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:14px;color:#6f7275;font:400 13px 'IBM Plex Sans',sans-serif">−&nbsp;□&nbsp;✕</div>
+    </div>
+    <div style="display:flex;height:700px">
+      <div style="flex:1;padding:30px 34px;display:flex;flex-direction:column;gap:20px;min-width:0">
+        <div style="display:flex;align-items:flex-end;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="font:600 22px/1.15 'IBM Plex Sans',sans-serif;color:#f2f0ec">Сетка первой полосы</div>
+            <div style="font:400 13px 'IBM Plex Sans',sans-serif;color:#8d9095">Блоки можно потом растянуть прямо на полосе — шаблон задаёт только стартовое деление.</div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <div style="height:30px;padding:0 12px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.12);border-radius:3px;font:500 12px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Передняя полоса</div>
+            <div style="height:30px;padding:0 12px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Внутренняя</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div style="border:1px solid #C05B42;border-radius:4px;background:#1e2022;padding:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:168px;background:#f1ece0;padding:8px;display:flex;flex-direction:column;gap:5px">
+              <div style="height:26px;background:#ddd6c6;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ШАПКА</div>
+              <div style="flex:1;display:flex;gap:5px">
+                <div style="flex:2;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ГЛАВНАЯ · 3 КОЛ.</div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+                  <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ВРЕЗКА</div>
+                  <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">МОДУЛЬ</div>
+                </div>
+              </div>
+              <div style="height:32px;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">НИЖНИЙ БЛОК</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Шапка + главная и боковая</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">5 блоков · для выпуска с одним гвоздём</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #2b2e31;border-radius:4px;background:#1e2022;padding:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:168px;background:#f1ece0;padding:8px;display:flex;flex-direction:column;gap:5px">
+              <div style="height:26px;background:#ddd6c6;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ШАПКА</div>
+              <div style="flex:1;display:flex;gap:5px">
+                <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">1 КОЛ.</div>
+                <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">2 КОЛ.</div>
+                <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">3 КОЛ.</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Шапка + три колонки</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">4 блока · базовый вариант MVP</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #2b2e31;border-radius:4px;background:#1e2022;padding:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:168px;background:#f1ece0;padding:8px;display:flex;flex-direction:column;gap:5px">
+              <div style="height:22px;background:#ddd6c6;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ШАПКА</div>
+              <div style="height:60px;background:repeating-linear-gradient(135deg,#cbc4b3 0 4px,#dad4c5 4px 8px);display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ФОТО НА ВСЮ ШИРИНУ</div>
+              <div style="flex:1;display:flex;gap:5px">
+                <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ТЕКСТ · 2 КОЛ.</div>
+                <div style="width:34%;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ОБЪЯВЛ.</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Фото-гвоздь</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">4 блока · таблоидная подача</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #2b2e31;border-radius:4px;background:#1e2022;padding:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:168px;background:#f1ece0;padding:8px;display:flex;gap:5px">
+              <div style="width:30%;display:flex;flex-direction:column;gap:5px">
+                <div style="height:40px;background:#ddd6c6;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354;text-align:center">ШАПКА<br />СБОКУ</div>
+                <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">МОДУЛИ</div>
+              </div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+                <div style="flex:2;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ГЛАВНАЯ · 2 КОЛ.</div>
+                <div style="flex:1;background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ВТОРАЯ СТАТЬЯ</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Вертикальная шапка</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">5 блоков · бюллетень, листовка</div>
+            </div>
+          </div>
+
+          <div style="border:1px solid #2b2e31;border-radius:4px;background:#1e2022;padding:12px;display:flex;flex-direction:column;gap:10px">
+            <div style="height:168px;background:#f1ece0;padding:8px;display:flex;flex-direction:column;gap:5px">
+              <div style="height:22px;background:#ddd6c6;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">ШАПКА</div>
+              <div style="flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:5px">
+                <div style="background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">СТАТЬЯ</div>
+                <div style="background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">СТАТЬЯ</div>
+                <div style="background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">СТАТЬЯ</div>
+                <div style="background:#e6e0d1;display:flex;align-items:center;justify-content:center;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">СТАТЬЯ</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:3px">
+              <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Четыре квадранта</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">5 блоков · внутренняя полоса</div>
+            </div>
+          </div>
+
+          <div style="border:1px dashed #3a3d41;border-radius:4px;background:#191b1c;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">
+            <div style="width:30px;height:30px;border:1px solid #4a4d51;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#8d9095;font-size:16px">＋</div>
+            <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Пустая сетка</div>
+            <div style="font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:#6f7275;text-align:center;max-width:160px">разметить блоки самому, перетаскивая границы</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:300px;border-left:1px solid #26282b;background:#141516;padding:26px 20px;display:flex;flex-direction:column;gap:20px">
+        <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Параметры полосы / Page setup</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Формат</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">A3, портрет <span style="margin-left:auto;color:#6f7275">▾</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Поля, мм</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px">
+              <div style="height:32px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">14</div>
+              <div style="height:32px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">14</div>
+              <div style="height:32px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">12</div>
+              <div style="height:32px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">12</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Модульная сетка</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">6 колонок, средник 4 мм <span style="margin-left:auto;color:#6f7275">▾</span></div>
+          </div>
+        </div>
+        <div style="height:1px;background:#26282b"></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Страницы выпуска / Pages</div>
+          <div style="display:flex;gap:8px">
+            <div style="width:52px;height:74px;background:#efe9db;border:1px solid #C05B42;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font:500 9px 'IBM Plex Mono',monospace;color:#6b6354">1</div>
+            <div style="width:52px;height:74px;background:#e4ded0;border:1px solid #303337;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font:500 9px 'IBM Plex Mono',monospace;color:#6b6354">2</div>
+            <div style="width:52px;height:74px;background:#e4ded0;border:1px solid #303337;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font:500 9px 'IBM Plex Mono',monospace;color:#6b6354">3</div>
+            <div style="width:52px;height:74px;border:1px dashed #3a3d41;display:flex;align-items:center;justify-content:center;color:#6f7275;font-size:14px">＋</div>
+          </div>
+        </div>
+        <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+          <div style="height:34px;display:flex;align-items:center;justify-content:center;background:#C05B42;border-radius:3px;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif">Собрать полосу</div>
+          <div style="height:34px;display:flex;align-items:center;justify-content:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 13px 'IBM Plex Sans',sans-serif">Назад</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 · ГЛАВНЫЙ ЭКРАН -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">05</span> &nbsp;Вёрстка полосы / Layout &amp; preview</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="height:36px;background:#121314;border-bottom:1px solid #2a2c2f;display:flex;align-items:center;padding:0 12px;gap:12px">
+      <div style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#cfd2d4">Печатня</div>
+      <div style="font:400 12px/1 'IBM Plex Sans',sans-serif;color:#6f7275">Вечерний вестник, № 14 — полоса 1</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:14px;color:#6f7275;font:400 13px 'IBM Plex Sans',sans-serif">−&nbsp;□&nbsp;✕</div>
+    </div>
+    <div style="height:34px;background:#1a1c1d;border-bottom:1px solid #26282b;display:flex;align-items:center;padding:0 12px;gap:18px">
+      <div style="display:flex;gap:16px;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9"><div>Файл</div><div>Правка</div><div>Вид</div><div>Вставка</div><div>Полоса</div><div>Экспорт</div></div>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div style="height:24px;padding:0 10px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.14);border-radius:3px;font:500 11px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Сетка</div>
+        <div style="height:24px;padding:0 10px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.14);border-radius:3px;font:500 11px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Бумага</div>
+        <div style="height:24px;padding:0 10px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Границы блоков</div>
+        <div style="width:1px;height:18px;background:#2e3134;margin:0 4px"></div>
+        <div style="display:flex;align-items:center;gap:8px;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095"><span>−</span><span style="color:#dcdad6">74 %</span><span>＋</span></div>
+      </div>
+    </div>
+    <div style="display:flex;height:880px">
+      <div style="width:256px;border-right:1px solid #26282b;background:#141516;display:flex;flex-direction:column">
+        <div style="padding:16px 14px;display:flex;flex-direction:column;gap:9px;border-bottom:1px solid #26282b">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Полосы / Pages</div>
+          <div style="display:flex;gap:7px">
+            <div style="width:44px;height:62px;background:#efe9db;border:1px solid #C05B42;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">1</div>
+            <div style="width:44px;height:62px;background:#e4ded0;border:1px solid #303337;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">2</div>
+            <div style="width:44px;height:62px;background:#e4ded0;border:1px solid #303337;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">3</div>
+            <div style="width:44px;height:62px;background:#e4ded0;border:1px solid #303337;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">4</div>
+          </div>
+        </div>
+        <div style="padding:16px 14px 10px;display:flex;align-items:center;gap:8px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Статьи / Articles</div>
+          <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275;margin-left:auto">9</div>
+        </div>
+        <div style="flex:1;overflow:hidden;padding:0 10px;display:flex;flex-direction:column;gap:3px">
+          <div style="padding:9px 10px;border-radius:3px;background:#232628;border-left:2px solid #C05B42;display:flex;flex-direction:column;gap:3px">
+            <div style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#C05B42">Хроника происшествий</div>
+            <div style="font:500 13px/1.3 'IBM Plex Sans',sans-serif;color:#f2f0ec">Ночной обвал в Нижнем доке</div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">3 420 зн. · блок «Главная» · фото 1</div>
+          </div>
+          <div style="padding:9px 10px;border-radius:3px;display:flex;flex-direction:column;gap:3px">
+            <div style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6f7275">Городская жизнь</div>
+            <div style="font:400 13px/1.3 'IBM Plex Sans',sans-serif;color:#dcdad6">Управа продлила комендантский час</div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">1 780 зн. · блок «Нижний»</div>
+          </div>
+          <div style="padding:9px 10px;border-radius:3px;display:flex;flex-direction:column;gap:3px;background:rgba(192,91,66,.07)">
+            <div style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6f7275">Порт</div>
+            <div style="font:400 13px/1.3 'IBM Plex Sans',sans-serif;color:#dcdad6">Ласточка не вернулась к сроку</div>
+            <div style="display:flex;align-items:center;gap:6px;font:400 11px 'IBM Plex Sans',sans-serif;color:#e08b73"><span style="width:6px;height:6px;border-radius:50%;background:#C05B42"></span>не помещается: 312 зн.</div>
+          </div>
+          <div style="padding:9px 10px;border-radius:3px;display:flex;flex-direction:column;gap:3px">
+            <div style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6f7275">Мнение</div>
+            <div style="font:400 13px/1.3 'IBM Plex Sans',sans-serif;color:#dcdad6">Кому выгодна тишина на складах</div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">940 зн. · врезка</div>
+          </div>
+          <div style="padding:9px 10px;border-radius:3px;display:flex;flex-direction:column;gap:3px">
+            <div style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6f7275">Некролог</div>
+            <div style="font:400 13px/1.3 'IBM Plex Sans',sans-serif;color:#dcdad6">Памяти смотрителя маяка</div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">310 зн. · боковая колонка</div>
+          </div>
+          <div style="padding:9px 10px;border-radius:3px;display:flex;flex-direction:column;gap:3px">
+            <div style="font:500 10px 'IBM Plex Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#6f7275">Не размещено</div>
+            <div style="font:400 13px/1.3 'IBM Plex Sans',sans-serif;color:#9a9da1">Письма читателей · 4 шт.</div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275">перетащите в блок</div>
+          </div>
+        </div>
+        <div style="padding:12px 14px 14px;border-top:1px solid #26282b;display:flex;flex-direction:column;gap:10px">
+          <div style="height:32px;display:flex;align-items:center;justify-content:center;gap:7px;background:#C05B42;border-radius:3px;color:#fff;font:500 12px 'IBM Plex Sans',sans-serif">＋ Добавить статью</div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Модули / Modules</div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              <div style="padding:5px 9px;border:1px solid #3a3d41;border-radius:99px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Объявление</div>
+              <div style="padding:5px 9px;border:1px solid #3a3d41;border-radius:99px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Погода</div>
+              <div style="padding:5px 9px;border:1px solid #3a3d41;border-radius:99px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Курсы</div>
+              <div style="padding:5px 9px;border:1px solid #3a3d41;border-radius:99px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Цитата</div>
+              <div style="padding:5px 9px;border:1px solid #3a3d41;border-radius:99px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Некролог</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;background:#101112;display:flex;flex-direction:column;align-items:center;padding:18px 0 0;position:relative">
+        <div style="width:588px;height:831px;position:relative">
+          <div style="width:794px;height:1123px;transform:scale(0.74);transform-origin:top left;position:absolute;top:0;left:0;background:#efe7d4;box-shadow:0 14px 40px rgba(0,0,0,.6);overflow:hidden">
+            <div style="position:absolute;inset:0;padding:34px 38px;box-sizing:border-box;display:flex;flex-direction:column;text-shadow:0 0 0.45px rgba(20,16,12,.55)">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;font:400 10px 'PT Sans Narrow',sans-serif;color:#453b2e;letter-spacing:.14em;padding-bottom:4px;border-bottom:1px solid #6d6250">
+                <div>№ 14 · ГОДЪ ИЗДАНIЯ ШЕСТОЙ</div><div>ПОРТ-АРКАДIЯ · СРЕДА, 12 IЮНЯ</div><div>ЦЕНА 5 КОПЕЕКЪ</div>
+              </div>
+              <div style="display:grid;grid-template-columns:112px 1fr 112px;align-items:center;gap:14px;padding:12px 0 8px">
+                <div style="border-top:1px solid #15120e;border-bottom:1px solid #15120e;padding:5px 0;font:400 8.5px/1.5 'PT Sans Narrow',sans-serif;letter-spacing:.08em;color:#3a3227;text-align:center">ПОДПИСКА НА МЕСЯЦЪ<br /><span style="font-size:11px;letter-spacing:.04em">1 р. 20 к.</span><br />съ доставкой на домъ</div>
+                <div style="text-align:center">
+                  <div style="font:400 13px/1 'Old Standard TT',serif;letter-spacing:.62em;color:#2a231b;text-indent:.62em">ВЕЧЕРНIЙ</div>
+                  <div style="font:700 58px/.98 'Old Standard TT',serif;color:#15120e;letter-spacing:.05em;white-space:nowrap;text-indent:.05em;margin-top:2px">ВЕСТНИКЪ</div>
+                </div>
+                <div style="border-top:1px solid #15120e;border-bottom:1px solid #15120e;padding:5px 0;font:400 8.5px/1.5 'PT Sans Narrow',sans-serif;letter-spacing:.08em;color:#3a3227;text-align:center">ОБЪЯВЛЕНIЯ<br /><span style="font-size:11px;letter-spacing:.04em">8 к. за строку</span><br />позади текста — дешевле</div>
+              </div>
+              <div style="font:italic 400 12.5px/1 'Old Standard TT',serif;color:#453b2e;text-align:center;padding-bottom:9px">Выходитъ ежедневно, кроме воскресныхъ дней и табельныхъ праздниковъ</div>
+              <div style="height:2.5px;background:#15120e"></div>
+              <div style="height:1px;background:#15120e;margin-top:2.5px"></div>
+              <div style="display:flex;justify-content:center;gap:22px;font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.2em;color:#3a3227;padding:6px 0;border-bottom:1px solid #15120e">
+                <div>ХРОНИКА ПРОИСШЕСТВIЙ</div><div style="color:#8d8271">✦</div><div>ГОРОДСКАЯ ЖИЗНЬ</div><div style="color:#8d8271">✦</div><div>ПОРТЪ И ТОРГЪ</div><div style="color:#8d8271">✦</div><div>ОБЪЯВЛЕНIЯ</div>
+              </div>
+
+              <div style="flex:1;display:flex;gap:16px;padding-top:12px;min-height:0">
+                <div style="flex:1;display:flex;flex-direction:column;min-width:0;position:relative;outline:1.5px solid #C05B42;outline-offset:6px">
+                  <div style="position:absolute;top:0;right:0;z-index:2;background:#C05B42;color:#fff;font:500 9px 'IBM Plex Sans',sans-serif;padding:3px 7px;letter-spacing:.06em;white-space:nowrap">ГЛАВНАЯ СТАТЬЯ · 3 КОЛОНКИ · 96 %</div>
+                  <div style="font:400 10px 'PT Sans Narrow',sans-serif;letter-spacing:.2em;color:#6b3226;border-bottom:1px solid #b8ae9b;padding-bottom:4px;margin-bottom:8px">ХРОНИКА ПРОИСШЕСТВIЙ</div>
+                  <div style="font:700 38px/1.04 'Old Standard TT',serif;color:#15120e">Ночной обвалъ въ Нижнемъ доке: движенiе закрыто на трое сутокъ</div>
+                  <div style="font:italic 400 15px/1.35 'Old Standard TT',serif;color:#3a3227;margin-top:8px;border-bottom:1px solid #b8ae9b;padding-bottom:8px">Пострадавшихъ нетъ. Смотритель складовъ отстраненъ до окончанiя дознанiя, грузы перенаправлены на Верхнюю пристань.</div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:6px 0"><div style="height:1px;flex:1;background:#cac2b0"></div><div style="font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#5a5145">ЗАПИСАЛЪ М. ГРОУВЪ · НИЖНIЙ ДОКЪ, 11 IЮНЯ, ПОЛНОЧЬ</div><div style="height:1px;flex:1;background:#cac2b0"></div></div>
+                  <div style="column-count:3;column-gap:14px;column-rule:1px solid #cac2b0;font:400 11.5px/1.52 'PT Serif',serif;color:#1c1812;text-align:justify;hyphens:auto;flex:1;min-height:0;overflow:hidden">
+                    <span style="float:left;font:700 46px/0.82 'Old Standard TT',serif;padding:3px 6px 0 0;color:#15120e">Н</span><span style="font-variant:small-caps;letter-spacing:.03em">очью, около половины перваго,</span> въ третьемъ пролёте Нижняго дока обрушилась часть кровли. Сторожъ услышалъ трескъ и успелъ вывести двоихъ грузчиковъ прежде, чемъ балка легла на настилъ. По словамъ портового мастера, кровлю держали на честномъ слове ещё съ прошлой зимы: смету на починку отклонили дважды.
+                    <div style="font:700 10px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#15120e;margin:7px 0 3px">У ВОРОТЪ СЪ УТРА</div>
+                    Собралась артель — люди требовали объясненiй и платы за простой. Управа выставила двухъ постовыхъ, но до сору дело не дошло. Къ полудню движенiе черезъ третiй пролётъ закрыли на трое сутокъ, грузы направили на Верхнюю пристань, где и безъ того тесно.
+                    <div style="margin:8px 0;break-inside:avoid">
+                      <div style="height:96px;background:repeating-linear-gradient(135deg,#cfc8b6 0 4px,#ddd6c6 4px 8px);display:flex;align-items:center;justify-content:center;font:400 9px 'IBM Plex Mono',monospace;color:#6b6354;letter-spacing:.04em">ФОТО · 92 × 64 мм</div>
+                      <div style="border-top:1px solid #15120e;margin-top:3px;padding-top:3px;font:italic 400 9.5px/1.4 'PT Serif',serif;color:#3f372b"><span style="font-style:normal;font-weight:700;font-family:'PT Sans Narrow',sans-serif;letter-spacing:.1em;font-size:8.5px">СНИМОКЪ. </span>Третiй пролётъ утромъ 12 iюня. Балку разбирали вручную, при керосиновыхъ фонаряхъ.</div>
+                    </div>
+                    Смотритель складовъ отстраненъ до окончанiя дознанiя. Въ конторе намъ сказали, что бумаги по прошлогодней смете «находятся въ работе» и будутъ предъявлены дознавателю въ понедельникъ.
+                    <div style="font:700 10px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#15120e;margin:7px 0 3px">ЧТО ГОВОРЯТЪ АРТЕЛЬНЫЕ</div>
+                    Платить за простой некому, а зима близко. Трое изъ шестерыхъ работали безъ записи въ книге, и на нихъ конторскiе бумаги вовсе не заведены.
+                    <div style="height:5px"></div>
+                    Старшiй артели Кузьма Долевъ показалъ намъ тетрадь, где отмечены выходы за апрель и май. По его счёту, конторе следуетъ уплатить сорокъ два рубля съ полтиной — за дни, когда люди являлись къ воротамъ и работы имъ не давали.
+                    <div style="font:700 10px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#15120e;margin:7px 0 3px">КАКЪ БУДЕТЪ ИДТИ ГРУЗЪ</div>
+                    Верхняя пристань приметъ на себя весь мелкiй каботажъ, крупныя суда будутъ разгружаться на рейде съ баржъ. По оценке мастера, это удлинитъ оборотъ на полдня.
+                    <div style="height:5px"></div>
+                    Редакцiя будетъ следить за деломъ и печатать ответы конторы безъ сокращенiй.
+                    <div style="border-top:1px solid #15120e;margin-top:6px;padding-top:4px;font:400 10px 'PT Sans Narrow',sans-serif;letter-spacing:.1em;color:#6b3226">ПРОДОЛЖЕНIЕ НА СТР. 3 ▸</div>
+                  </div>
+                </div>
+
+                <div style="width:196px;display:flex;flex-direction:column;gap:10px;border-left:1px solid #15120e;padding-left:14px">
+                  <div style="border:1px solid #15120e;padding:8px">
+                    <div style="font:700 10px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#15120e;text-align:center;border-bottom:1px solid #15120e;padding-bottom:4px;margin-bottom:6px">ПОГОДА НА СУТКИ</div>
+                    <div style="font:400 10.5px/1.5 'PT Serif',serif;color:#211d17">Ветръ съ моря, къ ночи туманъ. Днёмъ +11°, ночью +6°. Барометръ падаетъ.</div>
+                  </div>
+                  <div style="border-top:1px solid #15120e;border-bottom:1px solid #15120e;padding:6px 0">
+                    <div style="font:700 10px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#15120e;margin-bottom:4px">КУРСЫ И ЦЕНЫ</div>
+                    <div style="display:flex;justify-content:space-between;font:400 10.5px/1.7 'PT Serif',serif;color:#211d17"><span>Хлебъ, фунтъ</span><span>4 к.</span></div>
+                    <div style="display:flex;justify-content:space-between;font:400 10.5px/1.7 'PT Serif',serif;color:#211d17"><span>Уголь, пудъ</span><span>21 к.</span></div>
+                    <div style="display:flex;justify-content:space-between;font:400 10.5px/1.7 'PT Serif',serif;color:#211d17"><span>Наёмъ лодки</span><span>1 р. 10 к.</span></div>
+                  </div>
+                  <div style="padding:8px 0;border-bottom:1px solid #b8ae9b">
+                    <div style="font:italic 700 14px/1.3 'Old Standard TT',serif;color:#15120e">«Кровлю держали на честномъ слове ещё съ прошлой зимы»</div>
+                    <div style="font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.12em;color:#5a5145;margin-top:5px">ПОРТОВЫЙ МАСТЕРЪ, ИМЯ НЕ НАЗВАНО</div>
+                  </div>
+                  <div style="border:2px solid #15120e;padding:8px;text-align:center">
+                    <div style="font:700 11px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#15120e">ОБЪЯВЛЕНIЕ</div>
+                    <div style="height:1px;background:#15120e;margin:5px 0"></div>
+                    <div style="font:400 10.5px/1.5 'PT Serif',serif;color:#211d17">Артель «Три якоря» беретъ подряды на починку кровель и настиловъ. Спросить въ лавке Рогова, Нижнiй докъ, 7.</div>
+                  </div>
+                  <div style="padding-top:6px">
+                    <div style="font:700 10px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#15120e;margin-bottom:4px">ПАМЯТИ</div>
+                    <div style="font:400 10.5px/1.5 'PT Serif',serif;color:#211d17">Тихо скончался смотритель маяка П. Зельке, 61 годъ. Прощанiе въ пятницу у часовни.</div>
+                  </div>
+                  <div style="margin-top:auto;height:64px;background:repeating-linear-gradient(135deg,#cfc8b6 0 4px,#ddd6c6 4px 8px);display:flex;align-items:center;justify-content:center;font:400 8px 'IBM Plex Mono',monospace;color:#6b6354">РЕКЛАМА · 44 × 22 мм</div>
+                </div>
+              </div>
+
+              <div style="border-top:2.5px solid #15120e;margin-top:10px;padding-top:8px;display:flex;gap:13px">
+                <div style="flex:1;border-right:1px solid #cac2b0;padding-right:13px">
+                  <div style="font:400 8.5px 'PT Sans Narrow',sans-serif;letter-spacing:.18em;color:#6b3226;margin-bottom:2px">ГОРОДСКАЯ ЖИЗНЬ</div>
+                  <div style="font:700 15px/1.16 'Old Standard TT',serif;color:#15120e">Управа продлила комендантскiй часъ</div>
+                  <div style="font:400 10.5px/1.5 'PT Serif',serif;color:#1c1812;text-align:justify;margin-top:4px;hyphens:auto">До конца iюня выходъ въ портовую зону после одиннадцати — по пропускамъ. Пропуска выдаютъ въ конторе съ девяти утра, по предъявленiи рабочей книжки.</div>
+                </div>
+                <div style="flex:1;border-right:1px solid #cac2b0;padding-right:13px">
+                  <div style="font:400 8.5px 'PT Sans Narrow',sans-serif;letter-spacing:.18em;color:#6b3226;margin-bottom:2px">ПОРТЪ И ТОРГЪ</div>
+                  <div style="font:700 15px/1.16 'Old Standard TT',serif;color:#15120e">«Ласточка» не вернулась къ сроку</div>
+                  <div style="font:400 10.5px/1.5 'PT Serif',serif;color:#1c1812;text-align:justify;margin-top:4px;hyphens:auto">Катеръ вышелъ къ Косе въ понедельникъ и не далъ вести. Поиски ведутъ две лодки; хозяинъ обещалъ награду тому, кто укажетъ верно.</div>
+                </div>
+                <div style="flex:1">
+                  <div style="font:400 8.5px 'PT Sans Narrow',sans-serif;letter-spacing:.18em;color:#6b3226;margin-bottom:2px">ПИСЬМА ВЪ РЕДАКЦIЮ</div>
+                  <div style="font:700 15px/1.16 'Old Standard TT',serif;color:#15120e">«Фонари на Косой не горятъ третью неделю»</div>
+                  <div style="font:400 10.5px/1.5 'PT Serif',serif;color:#1c1812;text-align:justify;margin-top:4px;hyphens:auto">Пишетъ лавочникъ П. Рогову: масло отпускаютъ, а зажигать некому. Ответъ конторы печатаемъ въ следующемъ номере.</div>
+                </div>
+              </div>
+              <div style="border-top:1px solid #15120e;margin-top:8px;padding-top:5px;display:flex;justify-content:space-between;font:400 8.5px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#5a5145">
+                <div>ВЕЧЕРНIЙ ВЕСТНИКЪ · № 14</div><div>— 1 —</div><div>СРЕДА, 12 IЮНЯ</div>
+              </div>
+            </div>
+
+            <div style="position:absolute;inset:0;pointer-events:none;display:{{ guidesDisplay }}">
+              <div style="position:absolute;left:38px;right:38px;top:230px;bottom:34px;background:repeating-linear-gradient(to right,rgba(192,91,66,.5) 0 1px,rgba(192,91,66,0) 1px 119px)"></div>
+            </div>
+            <div style="position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:{{ agingOpacity }};background:radial-gradient(70% 52% at 50% 46%,rgba(214,196,158,0) 0,rgba(178,150,104,.26) 74%,rgba(140,112,68,.46) 100%),radial-gradient(26% 18% at 14% 12%,rgba(156,122,62,.3),rgba(156,122,62,0) 72%),radial-gradient(22% 16% at 88% 82%,rgba(140,106,54,.32),rgba(140,106,54,0) 70%),radial-gradient(14% 9% at 68% 33%,rgba(132,98,46,.3),rgba(132,98,46,0) 74%),linear-gradient(90deg,rgba(120,94,52,0) 47.4%,rgba(120,94,52,.22) 49.6%,rgba(255,250,238,.3) 50%,rgba(120,94,52,.2) 50.4%,rgba(120,94,52,0) 52.6%),repeating-linear-gradient(93deg,rgba(90,70,40,.06) 0 2px,rgba(90,70,40,0) 2px 7px)"></div>
+          </div>
+          <div style="position:absolute;top:-3px;left:-3px;width:6px;height:6px;background:#C05B42"></div>
+          <div style="position:absolute;top:-3px;right:-3px;width:6px;height:6px;background:#C05B42"></div>
+          <div style="position:absolute;bottom:-3px;left:-3px;width:6px;height:6px;background:#C05B42"></div>
+          <div style="position:absolute;bottom:-3px;right:-3px;width:6px;height:6px;background:#C05B42"></div>
+        </div>
+      </div>
+
+      <div style="width:312px;border-left:1px solid #26282b;background:#141516;display:flex;flex-direction:column">
+        <div style="display:flex;border-bottom:1px solid #26282b">
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Стиль</div>
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Типографика</div>
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec;border-bottom:2px solid #C05B42">Блок</div>
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Бумага</div>
+        </div>
+        <div style="padding:18px 16px;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex flex-direction:column">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Выбран блок / Selection</div>
+          </div>
+          <div style="background:#1b1d1f;border:1px solid #2b2e31;border-radius:3px;padding:12px;display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 14px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Главная статья</div>
+            <div style="font:400 12px/1.5 'IBM Plex Sans',sans-serif;color:#8d9095">Ночной обвал в Нижнем доке · 3 420 зн.</div>
+            <div style="height:4px;background:#26282b;border-radius:2px;overflow:hidden;margin-top:2px"><div style="width:96%;height:4px;background:#5f8f6a"></div></div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">текст занимает 96 % блока</div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Колонок в блоке</div>
+              <div style="display:flex;align-items:center;border:1px solid #303337;border-radius:3px;overflow:hidden">
+                <div style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;color:#8d9095;font-size:13px">−</div>
+                <div style="width:34px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">3</div>
+                <div style="width:26px;height:28px;display:flex;align-items:center;justify-content:center;color:#8d9095;font-size:13px">＋</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Буквица у лида</div>
+              <div style="width:38px;height:20px;border-radius:99px;background:#C05B42;display:flex;align-items:center;justify-content:flex-end;padding:0 3px;box-sizing:border-box"><div style="width:14px;height:14px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Межколоночные линейки</div>
+              <div style="width:38px;height:20px;border-radius:99px;background:#C05B42;display:flex;align-items:center;justify-content:flex-end;padding:0 3px;box-sizing:border-box"><div style="width:14px;height:14px;border-radius:50%;background:#fff"></div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Переносы слов</div>
+              <div style="width:38px;height:20px;border-radius:99px;background:#2f3336;display:flex;align-items:center;padding:0 3px;box-sizing:border-box"><div style="width:14px;height:14px;border-radius:50%;background:#8d9095"></div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Выключка</div>
+              <div style="display:flex;border:1px solid #303337;border-radius:3px;overflow:hidden">
+                <div style="flex:1;height:28px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Влево</div>
+                <div style="flex:1;height:28px;display:flex;align-items:center;justify-content:center;font:500 12px 'IBM Plex Sans',sans-serif;color:#fff;background:#C05B42">По ширине</div>
+                <div style="flex:1;height:28px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Центр</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="height:1px;background:#26282b"></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Изображение в блоке / Image</div>
+            <div style="display:flex;gap:10px;align-items:center">
+              <div style="width:64px;height:46px;background:repeating-linear-gradient(135deg,#3a3d41 0 4px,#45484c 4px 8px)"></div>
+              <div style="flex:1;display:flex;flex-direction:column;gap:3px">
+                <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#dcdad6">dock-collapse.jpg</div>
+                <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">92 × 64 мм · полутон</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <div style="height:28px;padding:0 10px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.12);border-radius:3px;font:500 11px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Полутон</div>
+              <div style="height:28px;padding:0 10px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Сепия</div>
+              <div style="height:28px;padding:0 10px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Ч/Б</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:auto;padding:14px 16px;border-top:1px solid #26282b;display:flex;gap:8px">
+          <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 12px 'IBM Plex Sans',sans-serif">Сохранить проект</div>
+          <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;background:#C05B42;border-radius:3px;color:#fff;font:500 12px 'IBM Plex Sans',sans-serif">Экспорт…</div>
+        </div>
+      </div>
+    </div>
+    <div style="height:28px;background:#121314;border-top:1px solid #26282b;display:flex;align-items:center;padding:0 12px;gap:16px;font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275">
+      <div>Полоса 1 из 4</div>
+      <div>Масштаб 74 %</div>
+      <div style="display:flex;align-items:center;gap:6px;color:#e08b73"><span style="width:6px;height:6px;border-radius:50%;background:#C05B42"></span>Переполнение: 1 блок</div>
+      <div style="flex:1"></div>
+      <div>Бумага: состаривание {{ agingLabel }} %</div>
+      <div>Автосохранение 19:42</div>
+    </div>
+  </div>
+
+  <!-- 6 · РЕДАКТОР СТАТЬИ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">06</span> &nbsp;Редактор статьи / Article editor</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="height:36px;background:#121314;border-bottom:1px solid #2a2c2f;display:flex;align-items:center;padding:0 12px;gap:12px">
+      <div style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#cfd2d4">Печатня</div>
+      <div style="font:400 12px/1 'IBM Plex Sans',sans-serif;color:#6f7275">Статья · блок «Главная» · полоса 1</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:14px;color:#6f7275;font:400 13px 'IBM Plex Sans',sans-serif">−&nbsp;□&nbsp;✕</div>
+    </div>
+    <div style="display:flex;height:844px">
+      <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+        <div style="height:44px;border-bottom:1px solid #26282b;background:#1a1c1d;display:flex;align-items:center;padding:0 16px;gap:8px">
+          <div style="width:28px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid #3a3d41;border-radius:3px;font:700 13px 'PT Serif',serif;color:#dcdad6">Ж</div>
+          <div style="width:28px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid #3a3d41;border-radius:3px;font:italic 400 13px 'PT Serif',serif;color:#dcdad6">К</div>
+          <div style="height:26px;padding:0 10px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.12);border-radius:3px;font:500 11px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Буквица</div>
+          <div style="width:1px;height:18px;background:#2e3134;margin:0 4px"></div>
+          <div style="height:26px;padding:0 10px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Подзаголовок</div>
+          <div style="height:26px;padding:0 10px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Врезка-цитата</div>
+          <div style="height:26px;padding:0 10px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 11px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Вставить фото…</div>
+          <div style="flex:1"></div>
+          <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275">3 420 знаков · 512 слов</div>
+        </div>
+        <div style="flex:1;padding:26px 30px;display:flex;flex-direction:column;gap:16px;min-height:0">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Рубрика / Kicker</div>
+              <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">Хроника происшествий</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Автор / Byline</div>
+              <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">М. Гроув</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Место и время / Dateline</div>
+              <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">Нижний док, 11 июня, полночь</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Заголовок / Headline</div>
+            <div style="min-height:34px;display:flex;align-items:center;padding:7px 11px;background:#151617;border:1px solid #C05B42;border-radius:3px;font:500 17px/1.3 'IBM Plex Sans',sans-serif;color:#f2f0ec">Ночной обвал в Нижнем доке: движение закрыто на трое суток</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Подзаголовок / Deck</div>
+            <div style="padding:8px 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px/1.5 'IBM Plex Sans',sans-serif;color:#dcdad6">Пострадавших нет. Смотритель складов отстранён до окончания дознания, грузы перенаправлены на Верхнюю пристань.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-height:0">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Текст статьи / Body</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275;margin-left:auto">Ctrl+B полужирный · Ctrl+I курсив</div>
+            </div>
+            <div style="flex:1;min-height:0;padding:14px 16px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 14px/1.7 'IBM Plex Sans',sans-serif;color:#cfd2d4;overflow:hidden">
+              <span style="background:rgba(192,91,66,.22);padding:0 2px">Ночью, около половины первого,</span> в третьем пролёте Нижнего дока обрушилась часть кровли. Сторож услышал треск и успел вывести двоих грузчиков прежде, чем балка легла на настил. По словам портового мастера, кровлю держали на честном слове ещё с прошлой зимы: смету на починку отклонили дважды.<br /><br />
+              Утром у ворот собралась артель — люди требовали объяснений и платы за простой. Управа выставила двух постовых, но до сору дело не дошло. К полудню движение через третий пролёт закрыли на трое суток, грузы направили на Верхнюю пристань, где и без того тесно.<br /><br />
+              Смотритель складов отстранён до окончания дознания. В конторе нам сказали, что бумаги по прошлогодней смете «находятся в работе» и будут предъявлены дознавателю в понедельник.<span style="display:inline-block;width:1px;height:16px;background:#C05B42;vertical-align:-3px;margin-left:1px"></span>
+            </div>
+          </div>
+        </div>
+        <div style="height:56px;border-top:1px solid #26282b;background:#1a1c1d;display:flex;align-items:center;padding:0 20px;gap:12px">
+          <div style="display:flex;align-items:center;gap:8px;font:400 12px 'IBM Plex Sans',sans-serif;color:#9dbf9f"><span style="width:7px;height:7px;border-radius:50%;background:#5f8f6a"></span>Помещается в блок: 96 % высоты</div>
+          <div style="flex:1"></div>
+          <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 13px 'IBM Plex Sans',sans-serif">Отменить</div>
+          <div style="height:32px;padding:0 16px;display:flex;align-items:center;background:#C05B42;border-radius:3px;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif">Применить к полосе</div>
+        </div>
+      </div>
+
+      <div style="width:470px;border-left:1px solid #26282b;background:#101112;display:flex;flex-direction:column">
+        <div style="height:44px;border-bottom:1px solid #26282b;display:flex;align-items:center;padding:0 16px;gap:10px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Блок на полосе / Live block</div>
+          <div style="flex:1"></div>
+          <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275">1 : 1</div>
+        </div>
+        <div style="flex:1;padding:20px;display:flex;justify-content:center;min-height:0">
+          <div style="width:406px;background:#efe7d4;padding:18px;box-sizing:border-box;position:relative;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5);text-shadow:0 0 .45px rgba(20,16,12,.5)">
+            <div style="font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.2em;color:#6b3226;border-bottom:1px solid #b8ae9b;padding-bottom:4px;margin-bottom:7px">ХРОНИКА ПРОИСШЕСТВIЙ</div>
+            <div style="font:700 27px/1.05 'Old Standard TT',serif;color:#15120e">Ночной обвалъ въ Нижнемъ доке: движенiе закрыто на трое сутокъ</div>
+            <div style="font:italic 400 12px/1.35 'Old Standard TT',serif;color:#3a3227;margin-top:7px;border-bottom:1px solid #b8ae9b;padding-bottom:7px">Пострадавшихъ нетъ. Смотритель складовъ отстраненъ до окончанiя дознанiя.</div>
+            <div style="font:400 8px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#5a5145;padding:5px 0">ЗАПИСАЛЪ М. ГРОУВЪ · НИЖНIЙ ДОКЪ, 11 IЮНЯ</div>
+            <div style="column-count:2;column-gap:13px;column-rule:1px solid #cac2b0;font:400 10.5px/1.55 'PT Serif',serif;color:#211d17;text-align:justify;hyphens:auto">
+              <span style="float:left;font:700 40px/0.82 'Old Standard TT',serif;padding:3px 5px 0 0;color:#15120e">Н</span>очью, около половины первого, въ третьемъ пролёте Нижняго дока обрушилась часть кровли. Сторожъ услышалъ трескъ и успелъ вывести двоихъ грузчиковъ прежде, чемъ балка легла на настилъ. По словамъ портового мастера, кровлю держали на честномъ слове ещё съ прошлой зимы: смету на починку отклонили дважды.
+              <div style="height:5px"></div>
+              Утромъ у воротъ собралась артель — люди требовали объясненiй и платы за простой. Управа выставила двухъ постовыхъ, но до сору дело не дошло. Къ полудню движенiе черезъ третiй пролётъ закрыли на трое сутокъ.
+            </div>
+            <div style="position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:{{ agingOpacity }};background:radial-gradient(72% 56% at 50% 48%,rgba(214,196,158,0) 0,rgba(178,150,104,.24) 76%,rgba(140,112,68,.42) 100%),radial-gradient(28% 20% at 10% 10%,rgba(156,122,62,.28),rgba(156,122,62,0) 72%),repeating-linear-gradient(93deg,rgba(90,70,40,.06) 0 2px,rgba(90,70,40,0) 2px 7px)"></div>
+          </div>
+        </div>
+        <div style="padding:14px 16px;border-top:1px solid #26282b;font:400 11px/1.6 'IBM Plex Sans',sans-serif;color:#6f7275">Превью пересобирается при паузе в наборе. Если текст не влезает, остаток уходит блоком «продолжение на стр. N».</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7 · ПАНЕЛИ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">07</span> &nbsp;Панели: типографика и бумага / Panels 1:1</div>
+  <div style="display:flex;gap:24px;align-items:flex-start">
+    <div style="width:340px;background:#141516;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.45)">
+      <div style="display:flex;border-bottom:1px solid #26282b">
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Стиль</div>
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec;border-bottom:2px solid #C05B42">Типографика</div>
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Блок</div>
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Бумага</div>
+      </div>
+      <div style="padding:18px 16px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Гарнитуры / Typefaces</div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Заголовки</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">Old Standard TT <span style="margin-left:auto;color:#6f7275">▾</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Основной текст</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">PT Serif <span style="margin-left:auto;color:#6f7275">▾</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Рубрики и подписи</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">PT Sans Narrow <span style="margin-left:auto;color:#6f7275">▾</span></div>
+          </div>
+          <div style="font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:#6f7275">Встроенные шрифты + установленные в системе. Кириллица проверяется при выборе.</div>
+        </div>
+        <div style="height:1px;background:#26282b"></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Кегли, пт / Sizes</div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Название издания</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">64</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Главный заголовок</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">38</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Заголовок статьи</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">15</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Основной текст</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">9,5</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Интерлиньяж</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">11,5</div></div>
+        </div>
+        <div style="height:1px;background:#26282b"></div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Образец / Specimen</div>
+          <div style="background:#f3eee2;padding:12px">
+            <div style="font:700 20px/1.05 'Old Standard TT',serif;color:#15120e">Заголовокъ въ два ряда</div>
+            <div style="font:400 10px/1.55 'PT Serif',serif;color:#211d17;text-align:justify;margin-top:6px"><span style="float:left;font:700 30px/0.82 'Old Standard TT',serif;padding:2px 4px 0 0">Н</span>абранный образецъ показываетъ кегль, интерлиньяжъ и буквицу въ выбранныхъ гарнитурахъ.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:340px;background:#141516;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 18px 44px rgba(0,0,0,.45)">
+      <div style="display:flex;border-bottom:1px solid #26282b">
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Стиль</div>
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Типографика</div>
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Блок</div>
+        <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec;border-bottom:2px solid #C05B42">Бумага</div>
+      </div>
+      <div style="padding:18px 16px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="flex:1;display:flex;flex-direction:column;gap:2px">
+            <div style="font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Состаривание</div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">Aged paper</div>
+          </div>
+          <div style="width:38px;height:20px;border-radius:99px;background:#C05B42;display:flex;align-items:center;justify-content:flex-end;padding:0 3px;box-sizing:border-box"><div style="width:14px;height:14px;border-radius:50%;background:#fff"></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="display:flex;align-items:center"><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Интенсивность</div><div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">{{ agingLabel }}</div></div>
+          <div style="height:4px;background:#26282b;border-radius:2px;position:relative">
+            <div style="height:4px;background:#C05B42;border-radius:2px;width:{{ agingPct }}"></div>
+            <div style="position:absolute;top:-5px;left:{{ agingPct }};width:14px;height:14px;border-radius:50%;background:#f2f0ec;border:1px solid #C05B42;margin-left:-7px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font:400 10px 'IBM Plex Sans',sans-serif;color:#6f7275"><div>0 — чистый лист</div><div>100 — потрёпанный</div></div>
+        </div>
+        <div style="height:1px;background:#26282b"></div>
+        <div style="display:flex;flex-direction:column;gap:11px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Составляющие / Layers</div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;background:#C05B42;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✓</div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#dcdad6;flex:1">Желтизна и сепия</div></div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;background:#C05B42;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✓</div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#dcdad6;flex:1">Пятна и разводы</div></div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;background:#C05B42;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✓</div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#dcdad6;flex:1">Неравномерность печати</div></div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;border:1px solid #3a3d41"></div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Заломы и сгибы</div></div>
+          <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;border:1px solid #3a3d41"></div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9;flex:1">Зерно скана</div></div>
+        </div>
+        <div style="height:1px;background:#26282b"></div>
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Проба / Sample</div>
+          <div style="height:132px;position:relative;overflow:hidden;background:#f3eee2;padding:12px">
+            <div style="font:700 14px/1.1 'Old Standard TT',serif;color:#15120e">Проба бумаги</div>
+            <div style="font:400 9.5px/1.5 'PT Serif',serif;color:#211d17;text-align:justify;margin-top:5px;column-count:2;column-gap:10px;column-rule:1px solid #cac2b0">Ползунокъ меняетъ желтизну, пятна и неравномерность оттиска. Печать и экспортъ учитываютъ эти настройки.</div>
+            <div style="position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:{{ agingOpacity }};background:radial-gradient(70% 54% at 50% 48%,rgba(214,196,158,0) 0,rgba(178,150,104,.26) 74%,rgba(140,112,68,.44) 100%),radial-gradient(26% 20% at 12% 10%,rgba(156,122,62,.3),rgba(156,122,62,0) 72%),repeating-linear-gradient(93deg,rgba(90,70,40,.07) 0 2px,rgba(90,70,40,0) 2px 7px)"></div>
+          </div>
+          <div style="font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:#6f7275">Эффект применяется ко всей полосе, включая изображения.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="width:340px;display:flex;flex-direction:column;gap:14px;padding-top:6px">
+      <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Заметки к панелям / Notes</div>
+      <div style="font:400 13px/1.65 'IBM Plex Sans',sans-serif;color:#9a9da1">Обе панели живут в правой колонке главного экрана и переключаются вкладками — отдельных окон нет, чтобы превью полосы оставалось видимым при любой правке.</div>
+      <div style="font:400 13px/1.65 'IBM Plex Sans',sans-serif;color:#9a9da1">Ползунок состаривания и переключатели вкладок вынесены в параметры этого макета: их можно покрутить прямо в предпросмотре и увидеть, как меняется полоса.</div>
+      <div style="height:1px;background:#26282b"></div>
+      <div style="font:400 12px/1.6 'IBM Plex Sans',sans-serif;color:#6f7275">Числовые поля — с шагом по стрелкам и вводом с клавиатуры. Значения в пунктах, размеры блоков в миллиметрах.</div>
+    </div>
+  </div>
+
+  <!-- 8 · ЭКСПОРТ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">08</span> &nbsp;Экспорт PDF / PNG</div>
+  <div style="width:1440px;height:760px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5);position:relative">
+    <div style="position:absolute;inset:0;display:flex;filter:saturate(.7)">
+      <div style="width:256px;background:#141516;border-right:1px solid #26282b"></div>
+      <div style="flex:1;background:#101112;display:flex;justify-content:center;padding-top:40px"><div style="width:420px;height:600px;background:#e9e3d5"></div></div>
+      <div style="width:312px;background:#141516;border-left:1px solid #26282b"></div>
+    </div>
+    <div style="position:absolute;inset:0;background:rgba(8,9,10,.66)"></div>
+    <div style="position:absolute;top:88px;left:50%;margin-left:-340px;width:680px;background:#1b1d1f;border:1px solid #34383c;border-radius:6px;box-shadow:0 30px 70px rgba(0,0,0,.6);overflow:hidden">
+      <div style="padding:20px 24px 0;display:flex;flex-direction:column;gap:16px">
+        <div style="display:flex;align-items:flex-start">
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <div style="font:600 18px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Экспорт выпуска</div>
+            <div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Вечерний вестник, № 14 · 4 полосы</div>
+          </div>
+          <div style="margin-left:auto;color:#6f7275;font-size:14px">✕</div>
+        </div>
+        <div style="display:flex;gap:0;border-bottom:1px solid #2b2e31">
+          <div style="padding:0 16px 10px;font:500 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec;border-bottom:2px solid #C05B42">PNG для чата</div>
+          <div style="padding:0 16px 10px;font:400 13px 'IBM Plex Sans',sans-serif;color:#8d9095">PDF для печати</div>
+        </div>
+      </div>
+      <div style="padding:18px 24px 22px;display:flex;gap:24px">
+        <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0">
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Что выгружаем / Pages</div>
+            <div style="display:flex;border:1px solid #303337;border-radius:3px;overflow:hidden">
+              <div style="flex:1;height:30px;display:flex;align-items:center;justify-content:center;font:500 12px 'IBM Plex Sans',sans-serif;color:#fff;background:#C05B42">Все полосы</div>
+              <div style="flex:1;height:30px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Только текущая</div>
+              <div style="flex:1;height:30px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Диапазон</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Разрешение / Resolution</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">150 dpi · 1754 × 2480 px <span style="margin-left:auto;color:#6f7275">▾</span></div>
+            <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275">96 / 150 / 300 / 600 dpi. Для Discord достаточно 150.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;background:#C05B42;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px">✓</div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#dcdad6">Включить эффект бумаги ({{ agingLabel }} %)</div></div>
+            <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;border:1px solid #3a3d41"></div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Метки реза и поля под печать</div></div>
+            <div style="display:flex;align-items:center;gap:9px"><div style="width:15px;height:15px;border-radius:2px;border:1px solid #3a3d41"></div><div style="font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Склеить полосы в одну картинку</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Куда сохранить / Destination</div>
+            <div style="display:flex;gap:6px">
+              <div style="flex:1;height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 12px 'IBM Plex Sans',sans-serif;color:#dcdad6;overflow:hidden">Документы\Печатня\Вестник-14\</div>
+              <div style="height:32px;padding:0 12px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 12px 'IBM Plex Sans',sans-serif;color:#cfd2d4">Выбрать…</div>
+            </div>
+          </div>
+        </div>
+        <div style="width:212px;display:flex;flex-direction:column;gap:10px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Предпросмотр / Preview</div>
+          <div style="background:#101112;border:1px solid #2b2e31;border-radius:3px;padding:10px;display:flex;gap:6px">
+            <div style="flex:1;aspect-ratio:0.707;background:#efe9db;position:relative;overflow:hidden">
+              <div style="position:absolute;inset:0;mix-blend-mode:multiply;opacity:{{ agingOpacity }};background:radial-gradient(70% 54% at 50% 48%,rgba(214,196,158,0) 0,rgba(178,150,104,.26) 74%,rgba(140,112,68,.44) 100%),radial-gradient(26% 20% at 12% 10%,rgba(156,122,62,.3),rgba(156,122,62,0) 72%)"></div>
+              <div style="position:absolute;bottom:3px;right:4px;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">1</div>
+            </div>
+            <div style="flex:1;aspect-ratio:0.707;background:#e9e3d5;position:relative;overflow:hidden"><div style="position:absolute;bottom:3px;right:4px;font:500 8px 'IBM Plex Mono',monospace;color:#6b6354">2</div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;font:400 11px/1.6 'IBM Plex Sans',sans-serif;color:#8d9095">
+            <div>4 файла PNG</div>
+            <div>≈ 2,8 МБ всего</div>
+            <div>Имена: vestnik-14-p1.png …</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:14px 24px;border-top:1px solid #2b2e31;background:#191b1c;display:flex;align-items:center;gap:10px">
+        <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275;margin-right:auto">Рендер идёт локально, сеть не нужна</div>
+        <div style="height:32px;padding:0 14px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 13px 'IBM Plex Sans',sans-serif">Отмена</div>
+        <div style="height:32px;padding:0 18px;display:flex;align-items:center;background:#C05B42;border-radius:3px;color:#fff;font:500 13px 'IBM Plex Sans',sans-serif">Выгрузить PNG</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 · БРЕНД ИЗДАНИЯ -->
+  <div style="font:500 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#8d9095;margin-top:44px"><span style="color:#C05B42">09</span> &nbsp;Бренд издания / Brand kit</div>
+  <div style="width:1440px;background:#17181a;border:1px solid #2e3134;border-radius:6px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.5)">
+    <div style="height:36px;background:#121314;border-bottom:1px solid #2a2c2f;display:flex;align-items:center;padding:0 12px;gap:12px">
+      <div style="font:600 11px/1 'IBM Plex Sans',sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#cfd2d4">Печатня</div>
+      <div style="font:400 12px/1 'IBM Plex Sans',sans-serif;color:#6f7275">Бренд издания · The Harbour Gazette</div>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:14px;color:#6f7275;font:400 13px 'IBM Plex Sans',sans-serif">−&nbsp;□&nbsp;✕</div>
+    </div>
+    <div style="display:flex;height:760px">
+      <div style="width:256px;border-right:1px solid #26282b;background:#141516;display:flex;flex-direction:column">
+        <div style="padding:16px 14px 10px;display:flex;align-items:center;gap:8px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Бренды / Brands</div>
+          <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275;margin-left:auto">4</div>
+        </div>
+        <div style="padding:0 10px;display:flex;flex-direction:column;gap:6px">
+          <div style="border:1px solid #C05B42;border-radius:3px;overflow:hidden;background:#1e2022">
+            <div style="background:#efe7d4;padding:9px 8px;text-align:center">
+              <div style="font:400 17px/1 'UnifrakturMaguntia',serif;color:#15120e">The Harbour Gazette</div>
+            </div>
+            <div style="padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+              <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Harbour Gazette</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">3 издания · 14 выпусков</div>
+            </div>
+          </div>
+          <div style="border:1px solid #2b2e31;border-radius:3px;overflow:hidden;background:#1e2022">
+            <div style="background:#eae5d9;padding:9px 8px;text-align:center">
+              <div style="font:700 13px/1 'Bodoni Moda',serif;letter-spacing:.14em;color:#141414">THE EVENING LEDGER</div>
+            </div>
+            <div style="padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+              <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Evening Ledger</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">1 издание · 6 выпусков</div>
+            </div>
+          </div>
+          <div style="border:1px solid #2b2e31;border-radius:3px;overflow:hidden;background:#1e2022">
+            <div style="background:#e9e3d5;padding:9px 8px;text-align:center">
+              <div style="font:700 14px/1 'Old Standard TT',serif;letter-spacing:.05em;color:#15120e">ВЕЧЕРНIЙ ВЕСТНИКЪ</div>
+            </div>
+            <div style="padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+              <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Вечерний вестник</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">1 издание · 14 выпусков</div>
+            </div>
+          </div>
+          <div style="border:1px solid #2b2e31;border-radius:3px;overflow:hidden;background:#1e2022">
+            <div style="background:#e8e0cd;padding:9px 8px;text-align:center">
+              <div style="font:700 15px/1 'Oswald',sans-serif;letter-spacing:.04em;color:#141414">ГОЛОС ДОКА</div>
+            </div>
+            <div style="padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+              <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Голос дока</div>
+              <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#8d9095">1 издание · 3 выпуска</div>
+            </div>
+          </div>
+          <div style="border:1px dashed #3a3d41;border-radius:3px;height:52px;display:flex;align-items:center;justify-content:center;gap:7px;color:#b3b6b9;font:500 12px 'IBM Plex Sans',sans-serif">＋ Новый бренд</div>
+        </div>
+        <div style="margin-top:auto;padding:14px;border-top:1px solid #26282b;font:400 11px/1.6 'IBM Plex Sans',sans-serif;color:#5c5f62">Бренд наследуется всеми выпусками издания. Правка бренда меняет шапки во всех номерах, вёрстка остаётся.</div>
+      </div>
+
+      <div style="flex:1;min-width:0;background:#101112;display:flex;flex-direction:column">
+        <div style="height:40px;border-bottom:1px solid #26282b;display:flex;align-items:center;padding:0 18px;gap:10px">
+          <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Логотип и применение / Logotype &amp; usage</div>
+          <div style="flex:1"></div>
+          <div style="font:400 11px 'IBM Plex Sans',sans-serif;color:#6f7275">масштаб по ширине полосы A3</div>
+        </div>
+        <div style="flex:1;padding:22px;display:flex;flex-direction:column;gap:18px;min-height:0;overflow:hidden">
+          <div style="background:#efe7d4;padding:26px 30px 22px;position:relative;overflow:hidden;box-shadow:0 14px 34px rgba(0,0,0,.5)">
+            <div style="display:flex;justify-content:space-between;font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#453b2e;border-bottom:1px solid #6d6250;padding-bottom:5px">
+              <div>VOL. VI · NO. 212</div><div>PORT ARCADIA · WEDNESDAY, JUNE 12</div><div>FIVE CENTS</div>
+            </div>
+            <div style="text-align:center;padding:16px 0 10px">
+              <div style="font:400 60px/1.06 'UnifrakturMaguntia',serif;color:#15120e">The Harbour Gazette</div>
+              <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px">
+                <div style="height:1px;width:120px;background:#6d6250"></div>
+                <div style="font:400 11px 'PT Sans Narrow',sans-serif;letter-spacing:.28em;color:#453b2e">ALL THE TIDE BRINGS IN</div>
+                <div style="height:1px;width:120px;background:#6d6250"></div>
+              </div>
+            </div>
+            <div style="height:2.5px;background:#15120e"></div>
+            <div style="height:1px;background:#15120e;margin-top:2.5px"></div>
+            <div style="display:flex;justify-content:center;gap:20px;font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.2em;color:#3a3227;padding:6px 0;border-bottom:1px solid #15120e">
+              <div>HARBOUR</div><div style="color:#8d8271">✦</div><div>CITY</div><div style="color:#8d8271">✦</div><div>TRADE</div><div style="color:#8d8271">✦</div><div>NOTICES</div>
+            </div>
+            <div style="position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;opacity:{{ agingOpacity }};background:radial-gradient(70% 54% at 50% 48%,rgba(214,196,158,0) 0,rgba(178,150,104,.24) 74%,rgba(140,112,68,.42) 100%),radial-gradient(26% 22% at 10% 12%,rgba(156,122,62,.28),rgba(156,122,62,0) 72%)"></div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Шапка внутренней полосы</div>
+              <div style="background:#efe7d4;padding:10px 12px">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid #15120e;padding-bottom:5px">
+                  <div style="font:400 15px/1 'UnifrakturMaguntia',serif;color:#15120e">The Harbour Gazette</div>
+                  <div style="font:400 8px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#5a5145">CITY · PAGE 2</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Штамп и колонцифра</div>
+              <div style="background:#efe7d4;padding:10px 12px;display:flex;align-items:center;gap:12px">
+                <div style="width:52px;height:52px;border:1px solid #6d6250;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font:400 7px/1.3 'PT Sans Narrow',sans-serif;letter-spacing:.1em;color:#5a5145;text-align:center">HARBOUR<br />GAZETTE<br />1889</div>
+                <div style="flex:1;font:400 8.5px/1.7 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#5a5145">THE HARBOUR GAZETTE · NO. 212<br />— 2 —<br />WEDNESDAY, JUNE 12</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Плашка рубрики</div>
+              <div style="background:#efe7d4;padding:10px 12px;display:flex;flex-direction:column;gap:7px">
+                <div style="background:#15120e;color:#efe7d4;font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.24em;padding:4px 8px;display:inline-block;align-self:flex-start">HARBOUR WATCH</div>
+                <div style="border-top:1px solid #15120e;border-bottom:1px solid #15120e;padding:3px 0;font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.24em;color:#15120e;text-align:center">TIDE TABLE</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:9px;min-height:0">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Направления логотипа / Nameplate directions</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+              <div style="border:1px solid #C05B42;border-radius:3px;overflow:hidden">
+                <div style="background:#efe7d4;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px">
+                  <div style="font:400 23px/1.1 'UnifrakturMaguntia',serif;color:#15120e;text-align:center">The Harbour Gazette</div>
+                  <div style="font:700 12px/1 'Old Standard TT',serif;letter-spacing:.06em;color:#15120e">ГАЗЕТА ПОРТА</div>
+                </div>
+                <div style="background:#1e2022;padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Готический</div>
+                  <div style="font:400 10.5px 'IBM Plex Sans',sans-serif;color:#8d9095">кириллица — антиквой</div>
+                </div>
+              </div>
+              <div style="border:1px solid #2b2e31;border-radius:3px;overflow:hidden">
+                <div style="background:#efe7d4;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px">
+                  <div style="font:700 17px/1.05 'Bodoni Moda',serif;letter-spacing:.1em;color:#141414;text-align:center">THE HARBOUR GAZETTE</div>
+                  <div style="font:700 12px/1 'Old Standard TT',serif;letter-spacing:.12em;color:#141414">ГАЗЕТА ПОРТА</div>
+                </div>
+                <div style="background:#1e2022;padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Новая антиква</div>
+                  <div style="font:400 10.5px 'IBM Plex Sans',sans-serif;color:#8d9095">высокий контраст, разрядка</div>
+                </div>
+              </div>
+              <div style="border:1px solid #2b2e31;border-radius:3px;overflow:hidden">
+                <div style="background:#efe7d4;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px">
+                  <div style="font:700 19px/1.05 'Oswald',sans-serif;letter-spacing:.02em;color:#141414;text-align:center">HARBOUR GAZETTE</div>
+                  <div style="font:700 14px/1 'Oswald',sans-serif;letter-spacing:.02em;color:#141414">ГАЗЕТА ПОРТА</div>
+                </div>
+                <div style="background:#1e2022;padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">Узкий гротеск</div>
+                  <div style="font:400 10.5px 'IBM Plex Sans',sans-serif;color:#8d9095">таблоид, крупный кегль</div>
+                </div>
+              </div>
+              <div style="border:1px solid #2b2e31;border-radius:3px;overflow:hidden">
+                <div style="background:#efe7d4;height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:8px">
+                  <div style="border:2px solid #15120e;padding:5px 9px;text-align:center">
+                    <div style="font:700 10px/1.25 'PT Sans Narrow',sans-serif;letter-spacing:.2em;color:#15120e">HARBOUR<br />GAZETTE</div>
+                  </div>
+                  <div style="font:400 9px 'PT Sans Narrow',sans-serif;letter-spacing:.16em;color:#5a5145">ОФИЦIАЛЬНОЕ ИЗДАНIЕ</div>
+                </div>
+                <div style="background:#1e2022;padding:8px 9px;display:flex;flex-direction:column;gap:2px">
+                  <div style="font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec">В рамке</div>
+                  <div style="font:400 10.5px 'IBM Plex Sans',sans-serif;color:#8d9095">вестник, бюллетень</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;min-height:0">
+            <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Минимальный размер и охранное поле</div>
+              <div style="background:#efe7d4;padding:14px;display:flex;align-items:flex-end;gap:18px">
+                <div style="display:flex;flex-direction:column;gap:5px;align-items:center">
+                  <div style="border:1px dashed #b08a5e;padding:9px 12px"><div style="font:400 22px/1.05 'UnifrakturMaguntia',serif;color:#15120e">The Harbour Gazette</div></div>
+                  <div style="font:400 8px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#5a5145">ПОЛОСА · 148 ММ · ОХРАННОЕ ПОЛЕ ½ КЕГЛЯ</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;align-items:center">
+                  <div style="border:1px dashed #b08a5e;padding:6px 8px"><div style="font:400 13px/1.05 'UnifrakturMaguntia',serif;color:#15120e">The Harbour Gazette</div></div>
+                  <div style="font:400 8px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#5a5145">ВНУТРЕННЯЯ · 82 ММ</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;align-items:center">
+                  <div style="border:1px dashed #b08a5e;padding:4px 6px"><div style="font:400 8px/1.05 'UnifrakturMaguntia',serif;color:#15120e">Harbour Gazette</div></div>
+                  <div style="font:400 8px 'PT Sans Narrow',sans-serif;letter-spacing:.14em;color:#5a5145">МИНИМУМ · 36 ММ</div>
+                </div>
+              </div>
+            </div>
+            <div style="width:300px;display:flex;flex-direction:column;gap:9px">
+              <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Постоянные элементы / Standing matter</div>
+              <div style="background:#efe7d4;padding:12px;display:flex;flex-direction:column;gap:9px">
+                <div style="border-bottom:1px solid #15120e;padding-bottom:6px">
+                  <div style="font:700 9px 'PT Sans Narrow',sans-serif;letter-spacing:.18em;color:#15120e;margin-bottom:3px">ВЫХОДНЫЯ СВЕДЕНIЯ</div>
+                  <div style="font:400 9.5px/1.5 'PT Serif',serif;color:#3f372b">Издаётся товариществомъ «Гавань». Редакторъ А. Сверре. Контора: Портовая, 4. Рукописи не возвращаются.</div>
+                </div>
+                <div>
+                  <div style="font:700 9px 'PT Sans Narrow',sans-serif;letter-spacing:.18em;color:#15120e;margin-bottom:3px">ПОДПИСЬ РЕДАКЦIИ</div>
+                  <div style="font:italic 400 10.5px/1.4 'Old Standard TT',serif;color:#3f372b">Отъ редакцiи. Ответы конторы печатаемъ безъ сокращенiй.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:340px;border-left:1px solid #26282b;background:#141516;display:flex;flex-direction:column">
+        <div style="display:flex;border-bottom:1px solid #26282b">
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:500 12px 'IBM Plex Sans',sans-serif;color:#f2f0ec;border-bottom:2px solid #C05B42">Логотип</div>
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Рубрикатор</div>
+          <div style="flex:1;height:38px;display:flex;align-items:center;justify-content:center;font:400 12px 'IBM Plex Sans',sans-serif;color:#8d9095">Краска</div>
+        </div>
+        <div style="padding:18px 16px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Название · латиница</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #C05B42;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">The Harbour Gazette</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Название · кириллица</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">Газета порта</div>
+            <div style="font:400 11px/1.5 'IBM Plex Sans',sans-serif;color:#6f7275">Готические гарнитуры без кириллицы — подменяются антиквой автоматически.</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Гарнитура логотипа</div>
+            <div style="height:32px;display:flex;align-items:center;padding:0 11px;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#dcdad6">UnifrakturMaguntia <span style="margin-left:auto;color:#6f7275">▾</span></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Кегль логотипа, пт</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">60</div></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Трекинг, ‰</div><div style="width:58px;height:28px;display:flex;align-items:center;justify-content:center;background:#1b1d1f;border:1px solid #303337;border-radius:3px;font:400 13px 'IBM Plex Sans',sans-serif;color:#f2f0ec">20</div></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Надстрочная строка</div><div style="width:38px;height:20px;border-radius:99px;background:#2f3336;display:flex;align-items:center;padding:0 3px;box-sizing:border-box"><div style="width:14px;height:14px;border-radius:50%;background:#8d9095"></div></div></div>
+            <div style="display:flex;align-items:center;gap:10px"><div style="flex:1;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Девиз под названием</div><div style="width:38px;height:20px;border-radius:99px;background:#C05B42;display:flex;align-items:center;justify-content:flex-end;padding:0 3px;box-sizing:border-box"><div style="width:14px;height:14px;border-radius:50%;background:#fff"></div></div></div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Девиз / Motto</div>
+            <div style="min-height:32px;display:flex;align-items:center;padding:7px 11px;background:#151617;border:1px solid #303337;border-radius:3px;font:400 13px/1.4 'IBM Plex Sans',sans-serif;color:#dcdad6">All the tide brings in</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Линейки под шапкой</div>
+            <div style="display:flex;gap:6px">
+              <div style="height:30px;padding:0 12px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Одна</div>
+              <div style="height:30px;padding:0 12px;display:flex;align-items:center;border:1px solid #C05B42;background:rgba(192,91,66,.12);border-radius:3px;font:500 12px 'IBM Plex Sans',sans-serif;color:#f0cfc6">Жирная + тонкая</div>
+              <div style="height:30px;padding:0 12px;display:flex;align-items:center;border:1px solid #3a3d41;border-radius:3px;font:400 12px 'IBM Plex Sans',sans-serif;color:#b3b6b9">Орнамент</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:7px">
+            <div style="font:500 10px/1 'IBM Plex Sans',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8d9095">Краска / Ink</div>
+            <div style="display:flex;gap:7px;align-items:center">
+              <div style="width:26px;height:26px;border-radius:2px;background:#15120e;border:1px solid #C05B42"></div>
+              <div style="width:26px;height:26px;border-radius:2px;background:#1f2a44;border:1px solid #303337"></div>
+              <div style="width:26px;height:26px;border-radius:2px;background:#6b3226;border:1px solid #303337"></div>
+              <div style="width:26px;height:26px;border-radius:2px;background:#2a3a2c;border:1px solid #303337"></div>
+              <div style="font:400 11px/1.4 'IBM Plex Sans',sans-serif;color:#6f7275;margin-left:4px">одна краска<br />на весь выпуск</div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:auto;padding:14px 16px;border-top:1px solid #26282b;display:flex;gap:8px">
+          <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;border:1px solid #3a3d41;border-radius:3px;color:#cfd2d4;font:400 12px 'IBM Plex Sans',sans-serif">Дублировать бренд</div>
+          <div style="flex:1;height:32px;display:flex;align-items:center;justify-content:center;background:#C05B42;border-radius:3px;color:#fff;font:500 12px 'IBM Plex Sans',sans-serif">Применить ко всем</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;aging&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:55,&quot;min&quot;:0,&quot;max&quot;:100,&quot;step&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Полоса&quot;},&quot;showColumnGuides&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Полоса&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const aging = this.props.aging ?? 55;
+    return {
+      agingPct: aging + "%",
+      agingLabel: String(aging),
+      agingOpacity: (aging / 100) * 0.9,
+      guidesDisplay: (this.props.showColumnGuides ?? true) ? "block" : "none"
+    };
+  }
+}
+</script>
+</body>
+</html>
