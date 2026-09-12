@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pechatnya"
+version = "1.0.0"
+description = "Печатня — десктопный конструктор игровых газет (Flet + Chromium)"
+requires-python = ">=3.11"
+dependencies = ["flet==0.86.5", "playwright>=1.40", "pillow>=10.0"]
+
+[project.scripts]
+pechatnya = "pechatnya.app:run"
+
+[tool.setuptools]
+packages = ["pechatnya", "pechatnya.render", "pechatnya.ui"]
+
+[tool.setuptools.package-data]
+pechatnya = []
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
