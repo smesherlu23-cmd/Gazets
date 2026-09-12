@@ -1,0 +1,142 @@
+[
+  {
+    "family": "IBM Plex Sans",
+    "style": "normal",
+    "weight": 400,
+    "file": "IBMPlexSans-400.ttf",
+    "size": 205252
+  },
+  {
+    "family": "IBM Plex Sans",
+    "style": "normal",
+    "weight": 500,
+    "file": "IBMPlexSans-500.ttf",
+    "size": 205292
+  },
+  {
+    "family": "IBM Plex Sans",
+    "style": "normal",
+    "weight": 600,
+    "file": "IBMPlexSans-600.ttf",
+    "size": 205284
+  },
+  {
+    "family": "IBM Plex Mono",
+    "style": "normal",
+    "weight": 400,
+    "file": "IBMPlexMono-400.ttf",
+    "size": 128812
+  },
+  {
+    "family": "IBM Plex Mono",
+    "style": "normal",
+    "weight": 600,
+    "file": "IBMPlexMono-600.ttf",
+    "size": 133444
+  },
+  {
+    "family": "Old Standard TT",
+    "style": "italic",
+    "weight": 400,
+    "file": "OldStandardTT-400Italic.ttf",
+    "size": 267016
+  },
+  {
+    "family": "Old Standard TT",
+    "style": "normal",
+    "weight": 400,
+    "file": "OldStandardTT-400.ttf",
+    "size": 242700
+  },
+  {
+    "family": "Old Standard TT",
+    "style": "normal",
+    "weight": 700,
+    "file": "OldStandardTT-700.ttf",
+    "size": 260156
+  },
+  {
+    "family": "PT Serif",
+    "style": "italic",
+    "weight": 400,
+    "file": "PTSerif-400Italic.ttf",
+    "size": 219344
+  },
+  {
+    "family": "PT Serif",
+    "style": "normal",
+    "weight": 400,
+    "file": "PTSerif-400.ttf",
+    "size": 202596
+  },
+  {
+    "family": "PT Serif",
+    "style": "normal",
+    "weight": 700,
+    "file": "PTSerif-700.ttf",
+    "size": 183172
+  },
+  {
+    "family": "PT Sans Narrow",
+    "style": "normal",
+    "weight": 400,
+    "file": "PTSansNarrow-400.ttf",
+    "size": 221708
+  },
+  {
+    "family": "PT Sans Narrow",
+    "style": "normal",
+    "weight": 700,
+    "file": "PTSansNarrow-700.ttf",
+    "size": 303516
+  },
+  {
+    "family": "Oswald",
+    "style": "normal",
+    "weight": 500,
+    "file": "Oswald-500.ttf",
+    "size": 86428
+  },
+  {
+    "family": "Oswald",
+    "style": "normal",
+    "weight": 600,
+    "file": "Oswald-600.ttf",
+    "size": 86444
+  },
+  {
+    "family": "Oswald",
+    "style": "normal",
+    "weight": 700,
+    "file": "Oswald-700.ttf",
+    "size": 86416
+  },
+  {
+    "family": "UnifrakturMaguntia",
+    "style": "normal",
+    "weight": 400,
+    "file": "UnifrakturMaguntia-400.ttf",
+    "size": 58476
+  },
+  {
+    "family": "Bodoni Moda",
+    "style": "italic",
+    "weight": 400,
+    "file": "BodoniModa-400Italic.ttf",
+    "size": 42332
+  },
+  {
+    "family": "Bodoni Moda",
+    "style": "normal",
+    "weight": 400,
+    "file": "BodoniModa-400.ttf",
+    "size": 39668
+  },
+  {
+    "family": "Bodoni Moda",
+    "style": "normal",
+    "weight": 700,
+    "file": "BodoniModa-700.ttf",
+    "size": 39744
+  }
+]
