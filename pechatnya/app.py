@@ -53,6 +53,7 @@ def _titlebar(app: AppState) -> ft.Control:
                 t.text(project_label, size=12, color=t.TEXT_MUTED),
                 ft.Container(width=12),
                 c.ghost_button("Сохранить", lambda _e: _save(app)),
+                c.ghost_button("Сохранить как…", lambda _e: app.page.run_task(app.save_as)),
                 c.ghost_button("К вёрстке", lambda _e: app.navigate("layout")),
                 t.hint(app.engine_note, size=11, color=t.TEXT_FAINTER),
             ],
@@ -136,7 +137,14 @@ def main(page: ft.Page) -> None:
             return
         key = (event.key or "").lower()
         if key == "s":
-            _save(app)
+            if event.shift:
+                page.run_task(app.save_as)
+            else:
+                _save(app)
+        elif key == "z":
+            app.redo() if event.shift else app.undo()
+        elif key == "y":
+            app.redo()
         elif key == "e":
             app.navigate("export")
         elif key == "n":

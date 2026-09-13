@@ -15,9 +15,9 @@ import platform
 import shutil
 import uuid
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
-from .models import Project, Publication
+from .models import ImageRef, Project, Publication
 from .serde import from_dict, to_dict
 
 PROJECT_SUFFIX = ".pechatnya.json"
@@ -74,11 +74,59 @@ def _write_json(path: pathlib.Path, data: Any) -> None:
 # ------------------------------------------------------------------- проекты
 
 
-def save_project(project: Project, path: pathlib.Path) -> pathlib.Path:
+def project_images(project: Project) -> Iterator[ImageRef]:
+    """Все картинки выпуска: в статьях и в модулях полос."""
+    for article in project.articles:
+        if article.image is not None:
+            yield article.image
+    for page in project.pages:
+        for block in page.blocks():
+            for module in block.modules:
+                if module.image is not None:
+                    yield module.image
+
+
+def relocate_images(
+    project: Project, target_path: pathlib.Path, source_dir: Optional[pathlib.Path] = None
+) -> int:
+    """Собирает картинки в папку проекта и делает пути относительными.
+
+    Нужно в двух случаях: снимок вставили до первого сохранения (он лежит в
+    профиле по абсолютному пути) и проект сохранили в другое место («сохранить
+    как») — иначе файл уедет без картинок.
+    """
+    target_dir = images_dir_for(target_path)
+    base = pathlib.Path(source_dir) if source_dir else target_path.parent
+    moved = 0
+    for image in project_images(project):
+        if not image.path:
+            continue
+        current = pathlib.Path(image.path)
+        if not current.is_absolute():
+            current = base / current
+        if not current.exists():
+            continue  # файл потеряли — на полосе останется плейсхолдер
+        if current.parent.resolve() != target_dir.resolve():
+            target_dir.mkdir(parents=True, exist_ok=True)
+            destination = target_dir / current.name
+            if destination.exists() and destination.stat().st_size != current.stat().st_size:
+                destination = target_dir / f"{current.stem}-{uuid.uuid4().hex[:4]}{current.suffix}"
+            if not destination.exists():
+                shutil.copy2(current, destination)
+            current = destination
+            moved += 1
+        image.path = os.path.relpath(current, target_path.parent).replace(os.sep, "/")
+    return moved
+
+
+def save_project(
+    project: Project, path: pathlib.Path, source_dir: Optional[pathlib.Path] = None
+) -> pathlib.Path:
     path = pathlib.Path(path)
     if path.suffix != ".json":
         path = path.with_name(path.name + PROJECT_SUFFIX)
     images_dir_for(path).mkdir(parents=True, exist_ok=True)
+    relocate_images(project, path, source_dir)
     _write_json(path, project.to_json_dict())
     remember_recent(path, project)
     return path

@@ -79,3 +79,36 @@ def test_png_export_names_and_dpi(tmp_path, render_engine) -> None:
     pillow = pytest.importorskip("PIL.Image")
     with pillow.open(result.files[0]) as image:
         assert image.size == (794, 1123)
+
+
+def test_split_point_is_picked_so_the_first_part_fits(render_engine) -> None:
+    """Подбор переноса: начало статьи должно влезать в блок, остаток — уезжать."""
+    from pechatnya.render.split import fit_split_point, measure_block
+
+    project = sample_project()
+    lead = project.articles[0]
+    lead.body = lead.body * 2  # заведомо не помещается
+    block = project.block_of(lead.id, part=0)
+
+    if not render_engine.can_measure:
+        pytest.skip("движок работает в режиме CLI — замер недоступен")
+
+    point = fit_split_point(project, lead.id, render_engine=render_engine)
+
+    assert point is not None and 0 < point < len(lead.body)
+    lead.split_at = point
+    assert measure_block(project, 0, block.id, None, render_engine) <= 100
+    assert lead.part_text(1).strip()  # остаток не пустой
+    # разрыв приходится на пробел — слово не разорвано
+    assert lead.body[point].isspace() or point == len(lead.body)
+
+
+def test_no_split_needed_for_short_article(render_engine) -> None:
+    from pechatnya.render.split import fit_split_point
+
+    project = sample_project()
+    short = project.articles[1]
+    if not render_engine.can_measure:
+        pytest.skip("движок работает в режиме CLI — замер недоступен")
+
+    assert fit_split_point(project, short.id, render_engine=render_engine) is None

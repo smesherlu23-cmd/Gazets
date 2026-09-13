@@ -217,33 +217,49 @@ def _article_html(
     typography: Typography,
     style: Style,
     project_dir: Optional[pathlib.Path],
+    from_page: Optional[int] = None,
 ) -> str:
+    """Блок статьи. ``block.article_part == 1`` — это «продолжение» на другой полосе."""
+    continuation = block.article_part == 1
     headline_px = typography.px("lead_headline_pt") * block.headline_scale
     parts: list[str] = []
     if article.rubric:
         parts.append(f'<div class="rubric">{esc(article.rubric)}</div>')
     title = article.title.upper() if style.uppercase_headlines else article.title
-    parts.append(
-        f'<h1 class="headline" style="font-size:{headline_px:.1f}px">{inline_markup(title)}</h1>'
-    )
-    if article.subtitle:
-        parts.append(f'<div class="lead">{inline_markup(article.subtitle)}</div>')
-    byline = " · ".join(item for item in (article.author, article.place_time) if item)
-    if byline:
+    if continuation:
         parts.append(
-            '<div class="byline"><span class="hair"></span>'
-            f'<span class="byline-text">{esc(byline.upper())}</span><span class="hair"></span></div>'
+            f'<h1 class="headline headline-jump" style="font-size:{headline_px * 0.55:.1f}px">'
+            f"{inline_markup(title)}</h1>"
         )
+        if from_page:
+            parts.append(f'<div class="jump-from">НАЧАЛО НА СТР. {from_page}</div>')
+    else:
+        parts.append(
+            f'<h1 class="headline" style="font-size:{headline_px:.1f}px">{inline_markup(title)}</h1>'
+        )
+        if article.subtitle:
+            parts.append(f'<div class="lead">{inline_markup(article.subtitle)}</div>')
+        byline = " · ".join(item for item in (article.author, article.place_time) if item)
+        if byline:
+            parts.append(
+                '<div class="byline"><span class="hair"></span>'
+                f'<span class="byline-text">{esc(byline.upper())}</span>'
+                '<span class="hair"></span></div>'
+            )
 
-    chunks = split_blocks(article.body)
+    chunks = split_blocks(article.part_text(block.article_part))
     body_parts: list[str] = []
-    figure = image_html(article.image, project_dir, 96) if article.image else ""
+    figure = (
+        image_html(article.image, project_dir, 96)
+        if article.image and not continuation
+        else ""
+    )
     for index, (kind, text) in enumerate(chunks):
         if kind == "subhead":
             body_parts.append(f'<div class="subhead">{esc(text)}</div>')
         elif kind == "quote":
             body_parts.append(f'<div class="inset-quote">{inline_markup(text)}</div>')
-        elif index == 0 and block.drop_cap and article.drop_cap:
+        elif index == 0 and block.drop_cap and article.drop_cap and not continuation:
             body_parts.append(
                 f'<p class="first">{_drop_cap(text, article.small_caps_opening)}</p>'
             )
@@ -254,7 +270,7 @@ def _article_html(
             figure = ""
     if figure:
         body_parts.insert(0, figure)
-    if article.continued_on:
+    if article.continued_on and not continuation:
         body_parts.append(
             f'<div class="jump">ПРОДОЛЖЕНИЕ НА СТР. {article.continued_on} &#9656;</div>'
         )
@@ -304,7 +320,13 @@ def _block_html(
 
     article = project.article(block.article_id)
     if article is not None:
-        inner = _article_html(article, block, project.typography, project.style, project_dir)
+        from_page = None
+        if block.article_part == 1:
+            source_page = project.page_of_article(block.article_id, part=0)
+            from_page = source_page + 1 if source_page is not None else None
+        inner = _article_html(
+            article, block, project.typography, project.style, project_dir, from_page
+        )
     elif block.modules:
         inner = (
             f'<div class="modules js-fit" data-fit="{block.id}">'
@@ -507,6 +529,9 @@ html,body{{margin:0;padding:0;background:#101112}}
   font:italic 400 9.5px/1.4 '{typo.body_font}',serif;color:#3f372b;text-indent:0}}
 .caption-prefix{{font-style:normal;font-weight:700;font-family:'{typo.caption_font}',sans-serif;
   letter-spacing:.1em;font-size:8.5px}}
+.headline-jump{{font-weight:700}}
+.jump-from{{font:400 9px '{typo.caption_font}',sans-serif;letter-spacing:.16em;
+  color:var(--accent-ink);margin:4px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--rule)}}
 .jump{{border-top:1px solid var(--ink);margin-top:6px;padding-top:4px;text-indent:0;
   font:400 10px '{typo.caption_font}',sans-serif;letter-spacing:.1em;color:var(--accent-ink)}}
 .modules{{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:10px}}

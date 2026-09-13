@@ -14,7 +14,7 @@ from . import theme as t
 
 
 def primary_button(label: str, on_click: Callable, icon: Optional[str] = None, width=None) -> ft.Control:
-    return ft.ElevatedButton(
+    return ft.Button(
         content=ft.Row(
             [
                 *( [ft.Icon(icon, size=14, color="#ffffff")] if icon else [] ),

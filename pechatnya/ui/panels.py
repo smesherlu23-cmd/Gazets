@@ -157,6 +157,9 @@ def _block_panel(app: AppState) -> ft.Control:
         if percent <= 100
         else f"не помещается: {fit.overflow_chars if fit else 0} зн."
     )
+    if block.article_part == 1 and article is not None:
+        source = app.project.page_of_article(article.id, part=0)
+        caption += f" · продолжение со стр. {source + 1}" if source is not None else ""
     selection_card = c.card(
         ft.Column(
             [
@@ -319,6 +322,7 @@ def _block_panel(app: AppState) -> ft.Control:
             ),
             *image_section,
             *modules_section,
+            *(_continuation_section(app, article, block) if article else []),
             *(
                 [
                     c.panel_section(
@@ -337,6 +341,66 @@ def _block_panel(app: AppState) -> ft.Control:
         ],
         spacing=22,
     )
+
+
+def _continuation_section(app: AppState, article, block) -> list[ft.Control]:
+    """Перенос остатка статьи на другую полосу — там, где видно переполнение."""
+    if block.article_part == 1:
+        return [
+            c.panel_section(
+                "Продолжение",
+                t.hint(
+                    "Это окончание статьи. Текст делится автоматически: правьте начало "
+                    "на исходной полосе, остаток подтянется сюда.",
+                    size=11,
+                ),
+                c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id)),
+                spacing=10,
+            )
+        ]
+
+    pages = len(app.project.pages)
+    current_page = app.project.page_of_article(article.id, part=0)
+    target = app.continuation_target or (
+        article.continued_on or min(pages, (current_page or 0) + 2)
+    )
+    controls: list[ft.Control] = [
+        c.stepper(
+            "Полоса",
+            target,
+            lambda value: _set_target(app, int(value)),
+            minimum=1,
+            maximum=max(1, pages),
+            width=104,
+        ),
+        c.secondary_button(
+            "Перенести остаток",
+            lambda _e: app.split_article(article.id, int(target) - 1),
+            height=30,
+        ),
+    ]
+    if article.split_at is not None:
+        controls.append(
+            t.hint(
+                f"Перенесено {len(article.part_text(1))} зн. на стр. {article.continued_on}",
+                size=11,
+                color=t.OK_TEXT,
+            )
+        )
+        controls.append(c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id)))
+    else:
+        controls.append(
+            t.hint(
+                "Программа подберёт точку разрыва так, чтобы начало влезло в блок, "
+                "и поставит строки «продолжение на стр.» и «начало на стр.».",
+                size=11,
+            )
+        )
+    return [c.panel_section("Продолжение на другой полосе", *controls, spacing=10)]
+
+
+def _set_target(app: AppState, value: int) -> None:
+    app.continuation_target = value
 
 
 def _image_path(app: AppState, image: ImageRef):

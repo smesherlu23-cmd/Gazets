@@ -244,14 +244,54 @@ class ArticleScreen:
             expand=True,
         )
 
-        continuation = c.stepper(
-            "Продолжение на стр.",
-            article.continued_on or 0,
-            self._set_continuation,
-            minimum=0,
-            maximum=64,
-            width=110,
+        pages = len(app.project.pages)
+        placed_on = app.project.page_of_article(article.id, part=0)
+        target = app.continuation_target or (
+            article.continued_on or min(pages, (placed_on or 0) + 2)
         )
+        continuation_controls: list[ft.Control] = []
+        if placed_on is None:
+            continuation_controls.append(
+                t.hint("Разместите статью на полосе, чтобы разделить её между полосами.", size=11)
+            )
+        else:
+            continuation_controls.append(
+                ft.Row(
+                    [
+                        c.stepper(
+                            "Продолжение на стр.",
+                            target,
+                            lambda value: setattr(app, "continuation_target", int(value)),
+                            minimum=1,
+                            maximum=max(1, pages),
+                            width=104,
+                        ),
+                    ],
+                    spacing=10,
+                )
+            )
+            continuation_controls.append(
+                c.secondary_button(
+                    "Перенести остаток",
+                    lambda _e: app.split_article(article.id, int(target) - 1),
+                    height=30,
+                )
+            )
+            if article.split_at is not None:
+                continuation_controls.append(
+                    t.hint(
+                        f"Остаток {len(article.part_text(1))} зн. стоит на стр. "
+                        f"{article.continued_on}",
+                        size=11,
+                        color=t.OK_TEXT,
+                    )
+                )
+                continuation_controls.append(
+                    c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id))
+                )
+            if app.busy_note:
+                continuation_controls.append(t.hint(app.busy_note, size=11, color=t.ACCENT_TEXT))
+        continuation = ft.Column(continuation_controls, spacing=10)
 
         side = ft.Container(
             content=ft.Column(
@@ -285,12 +325,6 @@ class ArticleScreen:
             return
         self.article.drop_cap = not self.article.drop_cap
         self.app.touch(rebuild=True)
-
-    def _set_continuation(self, value: float) -> None:
-        if self.article is None:
-            return
-        self.article.continued_on = int(value) or None
-        self.app.touch()
 
     def _apply(self) -> None:
         self.app.touch(immediate=True)

@@ -252,6 +252,8 @@ class LayoutScreen:
             items.append(
                 ft.Row([c.dot(t.OK_BAR), t.hint("Всё помещается", size=11, color=t.OK_TEXT)], spacing=6)
             )
+        if app.busy_note:
+            items.append(t.hint(app.busy_note, size=11, color=t.ACCENT_TEXT))
         if app.preview_error:
             items.append(t.hint(f"Рендер: {app.preview_error[:80]}", size=11, color=t.WARN))
         items.append(ft.Container(expand=True))
@@ -578,6 +580,8 @@ def _menu_bar(app: AppState) -> ft.Control:
         content=ft.Row(
             [
                 item("Проекты", lambda _e: app.navigate("start")),
+                _history_item(app, "Отменить", app.can_undo, app.undo),
+                _history_item(app, "Вернуть", app.can_redo, app.redo),
                 item("Номер", lambda _e: app.navigate("issue_edit")),
                 item("Издание", lambda _e: app.open_publications("layout")),
                 item("Сетка полосы", lambda _e: app.navigate("grid_edit")),
@@ -606,6 +610,19 @@ def _menu_bar(app: AppState) -> ft.Control:
         height=34,
         bgcolor=t.BG_WINDOW,
         padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+    )
+
+
+def _history_item(app: AppState, label: str, enabled: bool, action) -> ft.Control:
+    """Пункт меню, который гаснет, когда отменять нечего."""
+    return ft.Container(
+        content=t.text(label, size=12, color=t.TEXT_SECONDARY if enabled else t.TEXT_FAINTER),
+        padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+        height=34,
+        alignment=ft.Alignment.CENTER,
+        on_click=(lambda _e: action()) if enabled else None,
+        ink=enabled,
+        disabled=not enabled,
     )
 
 

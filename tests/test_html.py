@@ -84,3 +84,40 @@ def test_guides_and_borders_only_in_preview() -> None:
 
     assert 'class="guides"' in preview
     assert 'class="guides"' not in export
+
+
+def test_continuation_splits_text_between_pages() -> None:
+    """Остаток статьи печатается на другой полосе со ссылками в обе стороны."""
+    project = sample_project()
+    lead = project.articles[0]
+    split_at = 900
+
+    project.place_continuation(lead.id, 2, split_at)
+    first = page_document(project, 0)
+    third = page_document(project, 2)
+
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" in first
+    assert "НАЧАЛО НА СТР. 1" in third
+    # текст поделён, а не продублирован (сравниваем куски внутри абзацев:
+    # абзацы в HTML разложены по <p>, поэтому срез через перенос строки не ищем)
+    head_fragment = lead.part_text(0).split("\n")[-1][-40:]
+    tail_fragment = lead.part_text(1).split("\n")[0][:40]
+    assert head_fragment in first and head_fragment not in third
+    assert tail_fragment in third and tail_fragment not in first
+    # лид, автор и снимок остаются в начале статьи
+    assert lead.subtitle in first and lead.subtitle not in third
+    assert 'class="dropcap"' in first and 'class="dropcap"' not in third
+
+
+def test_dropping_continuation_returns_whole_text() -> None:
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 2, 900)
+
+    project.drop_continuation(lead.id)
+
+    assert lead.split_at is None
+    assert lead.continued_on is None
+    assert project.block_of(lead.id, part=1) is None
+    assert lead.part_text(0) == lead.body
+    assert "ПРОДОЛЖЕНИЕ НА СТР." not in page_document(project, 0)

@@ -158,6 +158,14 @@ class Article:
     image: Optional[ImageRef] = None
     block_id: Optional[str] = None
     continued_on: Optional[int] = None
+    split_at: Optional[int] = None  # сколько знаков уходит в первую часть
+
+    def part_text(self, part: int) -> str:
+        """Текст части: 0 — начало до разрыва, 1 — остаток для «продолжения»."""
+        if self.split_at is None:
+            return self.body if part == 0 else ""
+        point = max(0, min(len(self.body), self.split_at))
+        return self.body[:point].rstrip() if part == 0 else self.body[point:].lstrip()
 
     @property
     def char_count(self) -> int:
@@ -199,6 +207,7 @@ class Block:
     border_left: bool = False
     border_top: float = 0.0
     article_id: Optional[str] = None
+    article_part: int = 0  # 1 — блок с «продолжением» статьи
     modules: list[ModuleData] = field(default_factory=list)
 
     @property
@@ -376,6 +385,7 @@ class Project:
             for block in page.blocks():
                 if block.article_id == article_id:
                     block.article_id = None
+                    block.article_part = 0
                     if block.kind == "article":
                         block.kind = "empty"
         _, target = self.find_block(block_id)
@@ -394,14 +404,66 @@ class Project:
                 stale.block_id = None
 
     def detach(self, article_id: str) -> None:
+        """Снимает статью с полосы целиком — вместе с блоком «продолжения»."""
         for page in self.pages:
             for block in page.blocks():
                 if block.article_id == article_id:
                     block.article_id = None
+                    block.article_part = 0
                     block.kind = "empty"
         article = self.article(article_id)
         if article:
             article.block_id = None
+            article.continued_on = None
+            article.split_at = None
+
+    # ------------------------------------------------- продолжение на стр. N
+    def block_of(self, article_id: str, part: int = 0) -> Optional[Block]:
+        for page in self.pages:
+            for block in page.blocks():
+                if block.article_id == article_id and block.article_part == part:
+                    return block
+        return None
+
+    def free_block_on(self, page_index: int) -> Optional[Block]:
+        """Первый свободный блок полосы — туда ляжет продолжение."""
+        if not 0 <= page_index < len(self.pages):
+            return None
+        return next((block for block in self.pages[page_index].blocks() if block.is_empty), None)
+
+    def place_continuation(self, article_id: str, page_index: int, split_at: int) -> Optional[Block]:
+        """Кладёт остаток статьи на указанную полосу и ставит перекрёстные ссылки."""
+        article = self.article(article_id)
+        if article is None:
+            return None
+        target = self.block_of(article_id, part=1) or self.free_block_on(page_index)
+        if target is None:
+            return None
+        source = self.block_of(article_id, part=0)
+        if source is not None and source.id == target.id:
+            return None
+        target.article_id = article_id
+        target.article_part = 1
+        target.kind = "article"
+        target.modules = []
+        article.split_at = max(1, split_at)
+        article.continued_on = page_index + 1
+        return target
+
+    def drop_continuation(self, article_id: str) -> None:
+        block = self.block_of(article_id, part=1)
+        if block is not None:
+            block.article_id = None
+            block.article_part = 0
+            block.kind = "empty"
+        article = self.article(article_id)
+        if article is not None:
+            article.split_at = None
+            article.continued_on = None
+
+    def page_of_article(self, article_id: str, part: int = 0) -> Optional[int]:
+        block = self.block_of(article_id, part)
+        return self.page_of_block(block.id) if block else None
 
     # -------------------------------------------------------------- сохранение
     def to_json_dict(self) -> dict[str, Any]:
