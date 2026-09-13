@@ -39,7 +39,7 @@ def _columns(count: int, lines: int, spacing: int = 6) -> ft.Control:
 
 def paper_thumb(
     height: int = 190,
-    logo: str = "ВЕСТНИКЪ",
+    logo: str = "ИЗДАНИЕ",
     logo_font: str = "Old Standard TT Bold",
     logo_size: float = 15,
     paper: str = PAPER,
@@ -176,11 +176,15 @@ def masthead_preview(
     width: int = 640,
 ) -> ft.Control:
     """Живой показ шапки на бумаге — набирается теми же гарнитурами, что и полоса."""
+    def line(*parts: str) -> str:
+        return " · ".join(part.strip() for part in parts if part and part.strip())
+
     service = ft.Row(
         [
-            ft.Text(f"№ {number}", size=11, color="#3a3227", font_family="PT Serif"),
-            ft.Text(f"{city} · {date}", size=11, color="#3a3227", font_family="PT Serif"),
-            ft.Text(price, size=11, color="#3a3227", font_family="PT Serif"),
+            ft.Text(line(f"№ {number}" if number.strip() else ""), size=11, color="#3a3227",
+                    font_family="PT Serif"),
+            ft.Text(line(city, date), size=11, color="#3a3227", font_family="PT Serif"),
+            ft.Text(line(price), size=11, color="#3a3227", font_family="PT Serif"),
         ],
         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
     )
@@ -210,7 +214,7 @@ def masthead_preview(
         [
             ft.Container(
                 content=ft.Text(
-                    "Редакцiя принимаетъ объявленiя ежедневно съ девяти часовъ утра. "
+                    "Редакция принимает объявления ежедневно с девяти часов утра. "
                     "Рукописи не возвращаются.",
                     size=10,
                     color="#3a3227",

@@ -16,8 +16,9 @@ from typing import Callable, Optional
 import flet as ft
 
 from .. import storage
-from ..models import Block, BlockFit, Brand, Issue, Project
-from ..presets import demo_project
+from ..models import Block, BlockFit, Issue, Project, Publication
+from ..presets import new_project
+from ..serde import from_dict, to_dict
 from ..render.engine import engine, engine_report
 from ..render.html import RenderOptions
 from .preview import PreviewController, PreviewResult
@@ -26,13 +27,12 @@ AUTOSAVE_INTERVAL = 25.0
 
 
 class Wizard:
-    """Черновик нового выпуска: экраны 02 → 03 → 04 заполняют его по шагам."""
+    """Черновик нового выпуска: издание и данные номера, затем сетка полосы."""
 
     def __init__(self) -> None:
         self.issue = Issue()
-        self.preset_id = "classic"
         self.template_id = "front-main-side"
-        self.brand: Brand | None = None
+        self.publication_id = ""
 
     def reset(self) -> None:
         self.__init__()
@@ -41,7 +41,7 @@ class Wizard:
 class AppState:
     def __init__(self, page: ft.Page) -> None:
         self.page = page
-        self.project: Project = demo_project()
+        self.project: Project = new_project()
         self.project_path: Optional[pathlib.Path] = None
         self.dirty = False
 
@@ -64,7 +64,11 @@ class AppState:
         self.last_render_ms = 0
         self.autosave_stamp = "—"
         self.engine_note = ""
-        self.brand_tab = "logo"
+        self.start_filter = ""
+        self.publication_tab = "logo"
+        self.editing_publication: Optional[Publication] = None
+        self.publication_dirty = False
+        self.publication_return_route = "start"
         self.export_settings = None
         self.screens: dict[str, object] = {}
 
@@ -199,6 +203,96 @@ class AppState:
         self.current_page = 0
         self.selected_block_id = None
         self.fits = {}
+
+    # -------------------------------------------------------------- издания
+    @property
+    def publications(self) -> list[Publication]:
+        return storage.publications()
+
+    @property
+    def publication_back_label(self) -> str:
+        return {
+            "layout": "К вёрстке",
+            "issue": "К созданию выпуска",
+        }.get(self.publication_return_route, "К списку проектов")
+
+    def open_publications(self, return_route: str = "layout") -> None:
+        """Открывает редактор изданий, запоминая, куда возвращаться."""
+        self.publication_return_route = return_route
+        library = self.publications
+        current = next(
+            (item for item in library if item.id == self.project.publication_id), None
+        )
+        if current is not None:
+            self.editing_publication = current
+        elif library:
+            self.editing_publication = library[0]
+        else:
+            self.editing_publication = self.project.as_publication()
+        self.publication_dirty = False
+        self.navigate("publications")
+
+    def start_editing_publication(self) -> Publication:
+        library = self.publications
+        self.editing_publication = library[0] if library else Publication()
+        return self.editing_publication
+
+    def edit_publication(self, publication_id: str) -> None:
+        found = storage.publication(publication_id)
+        if found is not None:
+            self.editing_publication = found
+            self.publication_dirty = False
+            self.rebuild()
+
+    def new_publication(self, from_wizard: bool = False) -> None:
+        self.editing_publication = Publication()
+        self.publication_dirty = True
+        self.start_filter = ""
+        self.publication_tab = "logo"
+        if from_wizard:
+            self.publication_return_route = "issue"
+        self.navigate("publications")
+
+    def save_publication(self) -> None:
+        """Сохраняет издание и обновляет им текущий выпуск, если он этого издания."""
+        item = self.editing_publication
+        if item is None:
+            return
+        if not item.name.strip():
+            item.name = item.brand.display_name
+        storage.save_publication(item)
+        self.publication_dirty = False
+        if self.project.publication_id in ("", item.id):
+            self.project.inherit(item)
+            self.touch(immediate=True)
+        if self.publication_return_route == "issue":
+            self.wizard.publication_id = item.id
+        self.rebuild()
+
+    def duplicate_publication(self) -> None:
+        item = self.editing_publication
+        if item is None:
+            return
+        copy = from_dict(Publication, to_dict(item))
+        copy.id = Publication().id
+        copy.name = f"{item.display_name} — копия"
+        storage.save_publication(copy)
+        self.editing_publication = copy
+        self.publication_dirty = False
+        self.rebuild()
+
+    def delete_publication(self) -> None:
+        item = self.editing_publication
+        if item is None:
+            return
+        storage.delete_publication(item.id)
+        library = self.publications
+        self.editing_publication = library[0] if library else Publication()
+        self.publication_dirty = not library
+        self.rebuild()
+
+    def leave_publications(self) -> None:
+        self.navigate(self.publication_return_route)
 
     # ---------------------------------------------------------------- блоки
     @property

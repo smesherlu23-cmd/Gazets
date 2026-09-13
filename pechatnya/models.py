@@ -37,36 +37,31 @@ def new_id(prefix: str) -> str:
 
 @dataclass
 class Brand:
-    """Постоянная айдентика издания, наследуемая всеми выпусками (экран 09)."""
+    """Логотип и постоянные элементы шапки. Заполняется пользователем."""
 
     id: str = field(default_factory=lambda: new_id("brand"))
-    name_latin: str = "Harbour Gazette"
-    name_cyrillic: str = "Вечернiй Вестникъ"
+    name_latin: str = ""
+    name_cyrillic: str = ""
     use_cyrillic: bool = True
     logo_font: str = "Old Standard TT"
     logo_fallback_font: str = "Old Standard TT"
     logo_size_pt: float = 43.5
     tracking_permille: int = 50
-    superline_enabled: bool = True
-    superline: str = "ВЕЧЕРНIЙ"
+    superline_enabled: bool = False
+    superline: str = ""
     motto_enabled: bool = True
-    motto: str = "Выходитъ ежедневно, кроме воскресныхъ дней и табельныхъ праздниковъ"
+    motto: str = ""
     rules_style: str = "bold_thin"  # single | bold_thin | ornament
-    rubricator: list[str] = field(
-        default_factory=lambda: [
-            "ХРОНИКА ПРОИСШЕСТВIЙ",
-            "ГОРОДСКАЯ ЖИЗНЬ",
-            "ПОРТЪ И ТОРГЪ",
-            "ОБЪЯВЛЕНIЯ",
-        ]
-    )
+    rubricator: list[str] = field(default_factory=list)
     ink: str = "#15120e"
-    logo_direction: str = "gothic"  # gothic | antiqua | narrow | framed
-    imprint: str = "Издается въ Портъ-Аркадiи. Редакцiя — Нижнiй докъ, 7."
+    logo_font_preset: str = "antiqua"  # antiqua | gothic | modern | narrow | framed
+    imprint: str = ""
 
     @property
     def display_name(self) -> str:
-        return self.name_cyrillic if self.use_cyrillic and self.name_cyrillic else self.name_latin
+        if self.use_cyrillic and self.name_cyrillic:
+            return self.name_cyrillic
+        return self.name_latin or self.name_cyrillic
 
 
 # ------------------------------------------------------------------------- выпуск
@@ -74,19 +69,19 @@ class Brand:
 
 @dataclass
 class Issue:
-    """Карточка выпуска (экран 02)."""
+    """Данные конкретного номера. Всё, что печатается в служебных строках шапки."""
 
-    title: str = "Вечернiй Вестникъ"
-    motto: str = "Выходитъ ежедневно, кроме воскресныхъ дней и табельныхъ праздниковъ"
-    number: str = "14"
-    date: str = "Среда, 12 iюня"
-    price: str = "5 копеекъ"
-    city: str = "Портъ-Аркадiя"
-    pages_count: int = 4
+    title: str = ""
+    motto: str = ""
+    number: str = ""
+    date: str = ""
+    price: str = ""
+    city: str = ""
+    pages_count: int = 2
     masthead_frame: str = "double_rule"  # none | double_rule | ornament
-    year_line: str = "Годъ изданiя шестой"
-    masthead_left: str = "ПОДПИСКА НА МЕСЯЦЪ|1 р. 20 к.|съ доставкой на домъ"
-    masthead_right: str = "ОБЪЯВЛЕНIЯ|8 к. за строку|позади текста — дешевле"
+    year_line: str = ""
+    masthead_left: str = ""
+    masthead_right: str = ""
 
 
 # --------------------------------------------------------------------- типографика
@@ -131,7 +126,7 @@ class ImageRef:
 
     path: str = ""
     caption: str = ""
-    caption_prefix: str = "СНИМОКЪ."
+    caption_prefix: str = "СНИМОК."
     filter: str = "halftone"  # none | halftone | sepia | bw
     height_px: int = 96
     scale: float = 1.0
@@ -153,7 +148,7 @@ class Article:
 
     id: str = field(default_factory=lambda: new_id("art"))
     rubric: str = ""
-    title: str = "Безъ заголовка"
+    title: str = "Без заголовка"
     subtitle: str = ""
     author: str = ""
     place_time: str = ""
@@ -178,7 +173,7 @@ class ModuleData:
     """Служебный блок: объявление, погода, курсы, цитата, некролог."""
 
     kind: str = "ad"  # ad | weather | rates | quote | obituary | photo | free
-    title: str = "ОБЪЯВЛЕНIЕ"
+    title: str = "ОБЪЯВЛЕНИЕ"
     text: str = ""
     rows: list[list[str]] = field(default_factory=list)  # пары «подпись — значение»
     attribution: str = ""
@@ -265,12 +260,42 @@ class Style:
 
 
 @dataclass
+class Publication:
+    """Издание: постоянный облик газеты, общий для всех её номеров.
+
+    Живёт в библиотеке приложения отдельным файлом. Выпуск хранит ссылку
+    ``publication_id`` и снимок оформления, чтобы файл проекта открывался и без
+    библиотеки; при открытии снимок обновляется из библиотеки, если издание там
+    нашлось.
+    """
+
+    id: str = field(default_factory=lambda: new_id("pub"))
+    name: str = ""
+    brand: Brand = field(default_factory=Brand)
+    style: Style = field(default_factory=Style)
+    typography: Typography = field(default_factory=Typography)
+    masthead_left: str = ""
+    masthead_right: str = ""
+    year_line: str = ""
+    city: str = ""
+    price: str = ""
+    pages_count: int = 2
+    created_at: str = field(default_factory=lambda: dt.datetime.now().isoformat(timespec="seconds"))
+    updated_at: str = ""
+
+    @property
+    def display_name(self) -> str:
+        return self.name or self.brand.display_name or "Без названия"
+
+
+@dataclass
 class Project:
     """Файл проекта: всё, что нужно, чтобы вернуться к правке выпуска."""
 
     format_version: int = PROJECT_FORMAT_VERSION
     app: str = "pechatnya"
-    title: str = "Новый выпускъ"
+    title: str = ""
+    publication_id: str = ""
     brand: Brand = field(default_factory=Brand)
     issue: Issue = field(default_factory=Issue)
     style: Style = field(default_factory=Style)
@@ -285,6 +310,39 @@ class Project:
     grid_gutter_mm: float = 4.0
     created_at: str = field(default_factory=lambda: dt.datetime.now().isoformat(timespec="seconds"))
     saved_at: str = ""
+
+    # ------------------------------------------------------------ издание
+    def inherit(self, publication: "Publication") -> None:
+        """Берёт оформление из издания. Вёрстку и тексты не трогает."""
+        self.publication_id = publication.id
+        self.brand = from_dict(Brand, to_dict(publication.brand))
+        self.style = from_dict(Style, to_dict(publication.style))
+        self.typography = from_dict(Typography, to_dict(publication.typography))
+        self.issue.title = publication.display_name
+        self.issue.motto = publication.brand.motto
+        self.issue.masthead_left = publication.masthead_left
+        self.issue.masthead_right = publication.masthead_right
+        self.issue.year_line = publication.year_line
+        if not self.issue.city:
+            self.issue.city = publication.city
+        if not self.issue.price:
+            self.issue.price = publication.price
+        self.style.masthead_frame = self.issue.masthead_frame
+
+    def as_publication(self, name: str = "") -> "Publication":
+        """Собирает издание из текущего оформления выпуска."""
+        return Publication(
+            name=name or self.issue.title,
+            brand=from_dict(Brand, to_dict(self.brand)),
+            style=from_dict(Style, to_dict(self.style)),
+            typography=from_dict(Typography, to_dict(self.typography)),
+            masthead_left=self.issue.masthead_left,
+            masthead_right=self.issue.masthead_right,
+            year_line=self.issue.year_line,
+            city=self.issue.city,
+            price=self.issue.price,
+            pages_count=len(self.pages) or self.issue.pages_count,
+        )
 
     # ------------------------------------------------------------------ доступ
     def article(self, article_id: Optional[str]) -> Optional[Article]:

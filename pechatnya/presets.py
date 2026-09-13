@@ -11,14 +11,13 @@ from dataclasses import dataclass
 from typing import Callable
 
 from .models import (
-    Article,
     Block,
-    Brand,
     ImageRef,
     Issue,
     ModuleData,
     Page,
     Project,
+    Publication,
     Row,
     Style,
     Typography,
@@ -50,7 +49,7 @@ STYLE_PRESETS: list[StylePreset] = [
     ),
     StylePreset(
         id="tabloid",
-        name="Таблоидъ",
+        name="Таблоид",
         description="Крикливый гротеск, жирная линейка 4 px, крупное фото.",
         style=_style(
             preset_id="tabloid",
@@ -73,8 +72,8 @@ STYLE_PRESETS: list[StylePreset] = [
     ),
     StylePreset(
         id="bulletin",
-        name="Официальный вестникъ",
-        description="Двойная рамка шапки, узкий гротеск капителью, казённый тонъ.",
+        name="Официальный вестник",
+        description="Двойная рамка шапки, узкий гротеск капителью, казённый тон.",
         style=_style(
             preset_id="bulletin",
             paper_color="#f0eee6",
@@ -99,7 +98,7 @@ STYLE_PRESETS: list[StylePreset] = [
     StylePreset(
         id="agitprop",
         name="Партийная агитка",
-        description="Чёрная плашка съ вывороткой, брусок 6 px, красный акцентъ.",
+        description="Чёрная плашка с вывороткой, брусок 6 px, красный акцент.",
         style=_style(
             preset_id="agitprop",
             paper_color="#e8e0cd",
@@ -122,8 +121,8 @@ STYLE_PRESETS: list[StylePreset] = [
     ),
     StylePreset(
         id="underground",
-        name="Подпольный листокъ",
-        description="Машинописный моноширинный наборъ, слепая печать, звёздочки.",
+        name="Подпольный листок",
+        description="Машинописный моноширинный набор, слепая печать, звёздочки.",
         style=_style(
             preset_id="underground",
             paper_color="#e4ded0",
@@ -167,54 +166,25 @@ def apply_preset(project: Project, preset_id: str) -> None:
 # ------------------------------------------------------------- модули полосы
 
 MODULE_LIBRARY: dict[str, Callable[[], ModuleData]] = {
-    "ad": lambda: ModuleData(
-        kind="ad",
-        title="ОБЪЯВЛЕНIЕ",
-        text="Артель «Три якоря» беретъ подряды на починку кровель и настиловъ. "
-        "Спросить въ лавке Рогова, Нижнiй докъ, 7.",
-        framed=True,
-    ),
-    "weather": lambda: ModuleData(
-        kind="weather",
-        title="ПОГОДА НА СУТКИ",
-        text="Ветръ съ моря, къ ночи туманъ. Днёмъ +11°, ночью +6°. Барометръ падаетъ.",
-        framed=True,
-    ),
+    "ad": lambda: ModuleData(kind="ad", title="ОБЪЯВЛЕНИЕ", text="", framed=True),
+    "weather": lambda: ModuleData(kind="weather", title="ПОГОДА", text="", framed=True),
     "rates": lambda: ModuleData(
-        kind="rates",
-        title="КУРСЫ И ЦЕНЫ",
-        rows=[["Хлебъ, фунтъ", "4 к."], ["Уголь, пудъ", "21 к."], ["Наёмъ лодки", "1 р. 10 к."]],
-        framed=False,
+        kind="rates", title="ЦЕНЫ И КУРСЫ", rows=[["", ""], ["", ""], ["", ""]], framed=False
     ),
-    "quote": lambda: ModuleData(
-        kind="quote",
-        title="",
-        text="«Кровлю держали на честномъ слове ещё съ прошлой зимы»",
-        attribution="ПОРТОВЫЙ МАСТЕРЪ, ИМЯ НЕ НАЗВАНО",
-        framed=False,
-    ),
-    "obituary": lambda: ModuleData(
-        kind="obituary",
-        title="ПАМЯТИ",
-        text="Тихо скончался смотритель маяка П. Зельке, 61 годъ. Прощанiе въ пятницу у часовни.",
-        framed=False,
-    ),
+    "quote": lambda: ModuleData(kind="quote", title="", text="", attribution="", framed=False),
+    "obituary": lambda: ModuleData(kind="obituary", title="ПАМЯТИ", text="", framed=False),
     "photo": lambda: ModuleData(
-        kind="photo",
-        title="",
-        text="",
-        framed=False,
-        image=ImageRef(caption="Подпись къ снимку", height_px=120),
+        kind="photo", title="", text="", framed=False, image=ImageRef(caption="", height_px=120)
     ),
 }
 
 MODULE_TITLES = {
-    "ad": "Объявленiе",
+    "ad": "Объявление",
     "weather": "Погода",
     "rates": "Курсы",
     "quote": "Цитата",
-    "obituary": "Некрологъ",
-    "photo": "Снимокъ",
+    "obituary": "Некролог",
+    "photo": "Снимок",
 }
 
 
@@ -262,9 +232,9 @@ def _rows_main_side() -> list[Row]:
             fixed_height=132.0,
             gap=13.0,
             blocks=[
-                _block("Подвалъ — слева", columns=1, drop_cap=False, headline_scale=0.4),
-                _block("Подвалъ — въ центре", columns=1, drop_cap=False, headline_scale=0.4),
-                _block("Подвалъ — справа", columns=1, drop_cap=False, headline_scale=0.4),
+                _block("Подвал — слева", columns=1, drop_cap=False, headline_scale=0.4),
+                _block("Подвал — в центре", columns=1, drop_cap=False, headline_scale=0.4),
+                _block("Подвал — справа", columns=1, drop_cap=False, headline_scale=0.4),
             ],
         ),
     ]
@@ -305,7 +275,7 @@ def _rows_photo_lead() -> list[Row]:
         Row(
             weight=0.0,
             fixed_height=110.0,
-            blocks=[_block("Подвалъ", columns=3, drop_cap=False, headline_scale=0.42, border_top=2.5)],
+            blocks=[_block("Подвал", columns=3, drop_cap=False, headline_scale=0.42, border_top=2.5)],
         ),
     ]
 
@@ -324,8 +294,8 @@ def _rows_vertical_masthead() -> list[Row]:
             weight=0.0,
             fixed_height=140.0,
             blocks=[
-                _block("Подвалъ — слева", columns=2, drop_cap=False, headline_scale=0.45, border_top=2.5),
-                _block("Подвалъ — справа", columns=1, drop_cap=False, headline_scale=0.45, border_top=2.5),
+                _block("Подвал — слева", columns=2, drop_cap=False, headline_scale=0.45, border_top=2.5),
+                _block("Подвал — справа", columns=1, drop_cap=False, headline_scale=0.45, border_top=2.5),
             ],
         ),
     ]
@@ -336,15 +306,15 @@ def _rows_quadrants() -> list[Row]:
         Row(
             weight=1.0,
             blocks=[
-                _block("Верхнiй левый", columns=2, headline_scale=0.7),
-                _block("Верхнiй правый", columns=2, headline_scale=0.7),
+                _block("Верхний левый", columns=2, headline_scale=0.7),
+                _block("Верхний правый", columns=2, headline_scale=0.7),
             ],
         ),
         Row(
             weight=1.0,
             blocks=[
-                _block("Нижнiй левый", columns=2, headline_scale=0.6),
-                _block("Нижнiй правый", columns=2, headline_scale=0.6),
+                _block("Нижний левый", columns=2, headline_scale=0.6),
+                _block("Нижний правый", columns=2, headline_scale=0.6),
             ],
         ),
         Row(
@@ -356,14 +326,14 @@ def _rows_quadrants() -> list[Row]:
 
 
 def _rows_blank() -> list[Row]:
-    return [Row(weight=1.0, blocks=[_block("Пустой блокъ", columns=3)])]
+    return [Row(weight=1.0, blocks=[_block("Пустой блок", columns=3)])]
 
 
 GRID_TEMPLATES: list[GridTemplate] = [
     GridTemplate(
         "front-main-side",
         "Шапка + главная и боковая",
-        "Гвоздь номера на три колонки и узкая колонка врезокъ.",
+        "Гвоздь номера на три колонки и узкая колонка врезок.",
         "front",
         5,
         _rows_main_side,
@@ -371,7 +341,7 @@ GRID_TEMPLATES: list[GridTemplate] = [
     GridTemplate(
         "front-three-columns",
         "Шапка + три колонки",
-        "Три равные колонки и нижняя лента — самый ходовой макетъ.",
+        "Три равные колонки и нижняя лента — самый ходовой макет.",
         "front",
         4,
         _rows_three_columns,
@@ -379,7 +349,7 @@ GRID_TEMPLATES: list[GridTemplate] = [
     GridTemplate(
         "photo-lead",
         "Фото-гвоздь",
-        "Крупный снимокъ вверху, подъ нимъ два материала и подвалъ.",
+        "Крупный снимок вверху, под ним два материала и подвал.",
         "both",
         4,
         _rows_photo_lead,
@@ -387,7 +357,7 @@ GRID_TEMPLATES: list[GridTemplate] = [
     GridTemplate(
         "vertical-masthead",
         "Вертикальная шапка",
-        "Логотипъ сбоку, наборъ въ две колонки, врезки справа.",
+        "Логотип сбоку, набор в две колонки, врезки справа.",
         "front",
         5,
         _rows_vertical_masthead,
@@ -395,7 +365,7 @@ GRID_TEMPLATES: list[GridTemplate] = [
     GridTemplate(
         "quadrants",
         "Четыре квадранта",
-        "Четыре равныхъ материала и лента внизу — для внутреннихъ полосъ.",
+        "Четыре равных материала и лента внизу — для внутренних полос.",
         "inner",
         5,
         _rows_quadrants,
@@ -403,7 +373,7 @@ GRID_TEMPLATES: list[GridTemplate] = [
     GridTemplate(
         "blank",
         "Пустая сетка",
-        "Одинъ блокъ на всю полосу — делите границами вручную.",
+        "Один блок на всю полосу — делите границами вручную.",
         "both",
         1,
         _rows_blank,
@@ -443,124 +413,23 @@ def apply_template(page: Page, template_id: str) -> None:
 
 def new_project(
     issue: Issue | None = None,
-    preset_id: str = "classic",
+    publication: "Publication | None" = None,
     template_id: str = "front-main-side",
-    brand: Brand | None = None,
+    inner_template_id: str = "quadrants",
 ) -> Project:
     """Пустой выпуск: шапка и сетка есть, материалов ещё нет."""
     issue = issue or Issue()
-    project = Project(title=f"{issue.title}, № {issue.number}", issue=issue)
-    if brand is not None:
-        project.brand = brand
-    else:
-        project.brand.name_cyrillic = issue.title
-        project.brand.motto = issue.motto
-    project.brand.superline = issue.title.split()[0].upper() if issue.title else ""
-    apply_preset(project, preset_id)
+    project = Project(issue=issue)
+    if publication is not None:
+        project.inherit(publication)
+    project.title = _project_title(issue)
     project.style.masthead_frame = issue.masthead_frame
     project.pages = [build_page(template_id, "front")]
     for _ in range(max(0, issue.pages_count - 1)):
-        project.pages.append(build_page("quadrants", "inner"))
+        project.pages.append(build_page(inner_template_id, "inner"))
     return project
 
 
-DEMO_BODY = """Ночью, около половины перваго, въ третьемъ пролёте Нижняго дока обрушилась часть кровли. Сторожъ услышалъ трескъ и успелъ вывести двоихъ грузчиковъ прежде, чемъ балка легла на настилъ. По словамъ портового мастера, кровлю держали на честномъ слове ещё съ прошлой зимы: смету на починку отклонили дважды.
-
-## У ВОРОТЪ СЪ УТРА
-
-Собралась артель — люди требовали объясненiй и платы за простой. Управа выставила двухъ постовыхъ, но до сору дело не дошло. Къ полудню движенiе черезъ третiй пролётъ закрыли на трое сутокъ, грузы направили на Верхнюю пристань, где и безъ того тесно.
-
-Смотритель складовъ отстраненъ до окончанiя дознанiя. Въ конторе намъ сказали, что бумаги по прошлогодней смете «находятся въ работе» и будутъ предъявлены дознавателю въ понедельникъ.
-
-## ЧТО ГОВОРЯТЪ АРТЕЛЬНЫЕ
-
-Платить за простой некому, а зима близко. Трое изъ шестерыхъ работали безъ записи въ книге, и на нихъ конторскiе бумаги вовсе не заведены.
-
-Старшiй артели Кузьма Долевъ показалъ намъ тетрадь, где отмечены выходы за апрель и май. По его счёту, конторе следуетъ уплатить сорокъ два рубля съ полтиной — за дни, когда люди являлись къ воротамъ и работы имъ не давали.
-
-## КАКЪ БУДЕТЪ ИДТИ ГРУЗЪ
-
-Верхняя пристань приметъ на себя весь мелкiй каботажъ, крупныя суда будутъ разгружаться на рейде съ баржъ. По оценке мастера, это удлинитъ оборотъ на полдня.
-
-Редакцiя будетъ следить за деломъ и печатать ответы конторы безъ сокращенiй."""
-
-
-def demo_project() -> Project:
-    """Выпуск из макета — им открывается «Печатня» при первом запуске."""
-    project = new_project(Issue(), preset_id="classic", template_id="front-main-side")
-    project.title = "Вечернiй Вестникъ, № 14"
-    project.style.paper_color = "#efe7d4"
-    project.brand.name_cyrillic = "ВЕСТНИКЪ"
-    project.brand.name_latin = "Harbour Gazette"
-    project.brand.superline = "ВЕЧЕРНIЙ"
-
-    lead = Article(
-        rubric="ХРОНИКА ПРОИСШЕСТВIЙ",
-        title="Ночной обвалъ въ Нижнемъ доке: движенiе закрыто на трое сутокъ",
-        subtitle="Пострадавшихъ нетъ. Смотритель складовъ отстраненъ до окончанiя дознанiя, "
-        "грузы перенаправлены на Верхнюю пристань.",
-        author="Записалъ М. Гроувъ",
-        place_time="Нижнiй докъ, 11 iюня, полночь",
-        body=DEMO_BODY,
-        image=ImageRef(
-            caption="Третiй пролётъ утромъ 12 iюня. Балку разбирали вручную, при керосиновыхъ фонаряхъ.",
-            height_px=96,
-        ),
-        continued_on=3,
-    )
-    footer = [
-        Article(
-            rubric="ГОРОДСКАЯ ЖИЗНЬ",
-            title="Управа продлила комендантскiй часъ",
-            body="До конца iюня выходъ въ портовую зону после одиннадцати — по пропускамъ. "
-            "Пропуска выдаютъ въ конторе съ девяти утра, по предъявленiи рабочей книжки.",
-            drop_cap=False,
-        ),
-        Article(
-            rubric="ПОРТЪ И ТОРГЪ",
-            title="«Ласточка» не вернулась къ сроку",
-            body="Катеръ вышелъ къ Косе въ понедельникъ и не далъ вести. Поиски ведутъ две лодки; "
-            "хозяинъ обещалъ награду тому, кто укажетъ верно.",
-            drop_cap=False,
-        ),
-        Article(
-            rubric="ПИСЬМА ВЪ РЕДАКЦIЮ",
-            title="«Фонари на Косой не горятъ третью неделю»",
-            body="Пишетъ лавочникъ П. Рогову: масло отпускаютъ, а зажигать некому. "
-            "Ответъ конторы печатаемъ въ следующемъ номере.",
-            drop_cap=False,
-        ),
-    ]
-    extra = [
-        Article(
-            rubric="ДОЗНАНIЕ",
-            title="Смету на починку отклоняли дважды",
-            body="Мы подняли бумаги за прошлый годъ. Подрядъ на кровлю третьяго пролёта "
-            "вносился въ смету въ октябре и въ феврале; оба раза управа сочла работы "
-            "несрочными и перенесла ихъ на следующiй кварталъ.",
-            drop_cap=False,
-        ),
-        Article(
-            rubric="ПО ГУБЕРНIИ",
-            title="Ярмарка въ Слободе открывается въ субботу",
-            body="Торгъ пойдётъ три дня. Обещаны лошади съ верховыхъ заводовъ, "
-            "мелкiй скотъ и шорный рядъ.",
-            drop_cap=False,
-        ),
-    ]
-    project.articles = [lead, *footer, *extra]
-
-    front = project.pages[0]
-    front.rows[0].blocks[0].label = "Главная статья"
-    project.assign(lead.id, front.rows[0].blocks[0].id)
-    for article, block in zip(footer, front.rows[1].blocks):
-        project.assign(article.id, block.id)
-
-    sidebar = front.rows[0].blocks[1]
-    sidebar.kind = "module"
-    sidebar.label = "Боковая колонка"
-    sidebar.modules = [
-        make_module(kind) for kind in ("weather", "rates", "quote", "ad", "obituary", "photo")
-    ]
-    sidebar.modules[-1].image = ImageRef(caption="", height_px=64, filter="halftone")
-    return project
+def _project_title(issue: Issue) -> str:
+    name = issue.title.strip() or "Без названия"
+    return f"{name}, № {issue.number}" if issue.number.strip() else name

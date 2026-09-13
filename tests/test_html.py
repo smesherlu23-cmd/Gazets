@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from pechatnya.models import Article, Paper
-from pechatnya.presets import demo_project, new_project
+from pechatnya.presets import new_project
+from tests.fixtures import sample_project
 from pechatnya.render import paper as paper_layer
 from pechatnya.render.html import (
     RenderOptions,
@@ -27,13 +28,13 @@ def test_split_blocks_recognises_structure() -> None:
 
 
 def test_page_document_contains_masthead_and_fonts() -> None:
-    project = demo_project()
+    project = sample_project()
 
     html = page_document(project, 0)
 
     assert "@font-face" in html
     assert project.brand.display_name in html
-    assert "ПРОДОЛЖЕНIЕ НА СТР. 3" in html
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" in html
     assert 'data-fit=' in html  # крючки для замера вместимости
     assert "column-count:3" in html
 
@@ -66,7 +67,7 @@ def test_aging_layer_follows_checkboxes() -> None:
 
 
 def test_export_document_has_page_break_per_sheet() -> None:
-    project = demo_project()
+    project = sample_project()
 
     html = issue_document(project, RenderOptions(for_export=True), page_indexes=[0, 1, 2])
 
@@ -76,7 +77,7 @@ def test_export_document_has_page_break_per_sheet() -> None:
 
 
 def test_guides_and_borders_only_in_preview() -> None:
-    project = demo_project()
+    project = sample_project()
 
     preview = page_document(project, 0, RenderOptions(show_guides=True, show_block_borders=True))
     export = page_document(project, 0, RenderOptions(show_guides=True, for_export=True))

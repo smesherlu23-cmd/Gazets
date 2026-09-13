@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from pechatnya.presets import demo_project
+from tests.fixtures import sample_project
 from pechatnya.render.engine import engine, find_browser
 from pechatnya.render.export import ExportSettings, export
 from pechatnya.render.html import RenderOptions, page_document
@@ -20,7 +20,7 @@ def render_engine():
 
 
 def test_png_render_has_sheet_size(tmp_path, render_engine) -> None:
-    document = page_document(demo_project(), 0, RenderOptions(show_paper=True))
+    document = page_document(sample_project(), 0, RenderOptions(show_paper=True))
 
     path = render_engine.render_png(document, tmp_path / "page.png")
 
@@ -31,7 +31,7 @@ def test_png_render_has_sheet_size(tmp_path, render_engine) -> None:
 
 
 def test_measure_reports_fit_per_block(render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
     document = page_document(project, 0, RenderOptions())
 
     metrics = {item.id: item for item in render_engine.measure(document)}
@@ -45,7 +45,7 @@ def test_measure_reports_fit_per_block(render_engine) -> None:
 
 
 def test_overflow_is_detected(render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
     project.articles[0].body *= 3
     document = page_document(project, 0, RenderOptions())
 
@@ -59,7 +59,7 @@ def test_overflow_is_detected(render_engine) -> None:
 
 
 def test_pdf_export_contains_all_pages(tmp_path, render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
 
     result = export(project, ExportSettings(fmt="pdf", scope="all", directory=tmp_path))
 
@@ -69,7 +69,7 @@ def test_pdf_export_contains_all_pages(tmp_path, render_engine) -> None:
 
 
 def test_png_export_names_and_dpi(tmp_path, render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
 
     result = export(
         project, ExportSettings(fmt="png", scope="current", dpi=96, directory=tmp_path)

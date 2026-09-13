@@ -14,10 +14,10 @@ import pathlib
 import platform
 import shutil
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Optional
 
-from .models import Brand, Project, Style, Typography
+from .models import Project, Publication
 from .serde import from_dict, to_dict
 
 PROJECT_SUFFIX = ".pechatnya.json"
@@ -89,6 +89,12 @@ def load_project(path: pathlib.Path) -> Project:
     if data is None:
         raise OSError(f"не удалось прочитать проект: {path}")
     project = Project.from_json_dict(data)
+    # оформление берём из библиотеки: правка издания видна во всех его номерах,
+    # а если издания в библиотеке нет (файл принесли с другой машины) — остаётся
+    # снимок, сохранённый внутри проекта.
+    known = publication(project.publication_id) if project.publication_id else None
+    if known is not None:
+        project.inherit(known)
     remember_recent(pathlib.Path(path), project)
     return project
 
@@ -134,6 +140,8 @@ class RecentEntry:
     number: str = ""
     date: str = ""
     modified: str = ""
+    pages: int = 0
+    publication_id: str = ""
 
     @property
     def exists(self) -> bool:
@@ -161,6 +169,8 @@ def remember_recent(path: pathlib.Path, project: Project) -> None:
             number=project.issue.number,
             date=project.issue.date,
             modified=dt.datetime.now().isoformat(timespec="seconds"),
+            pages=len(project.pages),
+            publication_id=project.publication_id,
         ),
     )
     _write_json(recents_file(), [to_dict(entry) for entry in entries[:24]])
@@ -171,51 +181,39 @@ def forget_recent(path: str) -> None:
     _write_json(recents_file(), [to_dict(entry) for entry in entries])
 
 
-# ------------------------------------------------------------ бренды и пресеты
+# ---------------------------------------------------------- библиотека изданий
 
 
-def brands_file() -> pathlib.Path:
-    return app_dir() / "brands.json"
+def publications_file() -> pathlib.Path:
+    return app_dir() / "publications.json"
 
 
-def saved_brands() -> list[Brand]:
-    raw = _read_json(brands_file(), [])
-    return [from_dict(Brand, item) for item in raw if isinstance(item, dict)]
+def publications() -> list[Publication]:
+    """Все издания пользователя, свежие сверху."""
+    raw = _read_json(publications_file(), [])
+    items = [from_dict(Publication, item) for item in raw if isinstance(item, dict)]
+    return sorted(items, key=lambda item: item.updated_at or item.created_at, reverse=True)
 
 
-def save_brand(brand: Brand) -> None:
-    brands = [item for item in saved_brands() if item.id != brand.id]
-    brands.insert(0, brand)
-    _write_json(brands_file(), [to_dict(item) for item in brands])
+def publication(publication_id: str) -> Optional[Publication]:
+    return next((item for item in publications() if item.id == publication_id), None)
 
 
-def delete_brand(brand_id: str) -> None:
-    brands = [item for item in saved_brands() if item.id != brand_id]
-    _write_json(brands_file(), [to_dict(item) for item in brands])
+def save_publication(item: Publication) -> Publication:
+    item.updated_at = dt.datetime.now().isoformat(timespec="seconds")
+    rest = [other for other in publications() if other.id != item.id]
+    _write_json(publications_file(), [to_dict(entry) for entry in [item, *rest]])
+    return item
 
 
-@dataclass
-class UserPreset:
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
-    name: str = "Свой пресетъ"
-    description: str = "Сохранённое оформленiе"
-    style: Style = field(default_factory=Style)
-    typography: Typography = field(default_factory=Typography)
+def delete_publication(publication_id: str) -> None:
+    rest = [item for item in publications() if item.id != publication_id]
+    _write_json(publications_file(), [to_dict(item) for item in rest])
 
 
-def presets_file() -> pathlib.Path:
-    return app_dir() / "presets.json"
-
-
-def user_presets() -> list[UserPreset]:
-    raw = _read_json(presets_file(), [])
-    return [from_dict(UserPreset, item) for item in raw if isinstance(item, dict)]
-
-
-def save_user_preset(preset: UserPreset) -> None:
-    presets = [item for item in user_presets() if item.id != preset.id]
-    presets.insert(0, preset)
-    _write_json(presets_file(), [to_dict(item) for item in presets])
+def issues_of_publication(publication_id: str) -> list["RecentEntry"]:
+    """Сохранённые номера одного издания."""
+    return [entry for entry in recent_projects(99) if entry.publication_id == publication_id]
 
 
 # ---------------------------------------------------------------- выпуски серии

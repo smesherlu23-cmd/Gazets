@@ -178,27 +178,30 @@ def image_html(image: Optional[ImageRef], project_dir: Optional[pathlib.Path], h
 # ------------------------------------------------------------------------ модули
 
 
-def module_html(module: ModuleData, project_dir: Optional[pathlib.Path]) -> str:
+def module_html(
+    module: ModuleData, project_dir: Optional[pathlib.Path], for_export: bool = False
+) -> str:
     title = (
         f'<div class="mod-title">{esc(module.title)}</div>' if module.title else ""
     )
+    hint = "" if for_export else '<div class="mod-hint">заполните в панели «Блок»</div>'
     if module.kind == "rates":
+        filled = [row for row in module.rows if any(cell.strip() for cell in row)]
         rows = "".join(
-            f'<div class="rate"><span>{esc(row[0])}</span><span>{esc(row[1] if len(row) > 1 else "")}</span></div>'
-            for row in module.rows
+            f'<div class="rate"><span>{esc(row[0])}</span>'
+            f'<span>{esc(row[1] if len(row) > 1 else "")}</span></div>'
+            for row in filled
         )
-        return f'<div class="mod mod-rates">{title}{rows}</div>'
+        return f'<div class="mod mod-rates">{title}{rows or hint}</div>'
     if module.kind == "quote":
         attribution = (
             f'<div class="quote-attr">{esc(module.attribution)}</div>' if module.attribution else ""
         )
-        return (
-            f'<div class="mod mod-quote"><div class="quote-text">{inline_markup(module.text)}</div>'
-            f"{attribution}</div>"
-        )
+        body = f'<div class="quote-text">{inline_markup(module.text)}</div>' if module.text else hint
+        return f'<div class="mod mod-quote">{body}{attribution}</div>'
     if module.kind == "photo":
         return f'<div class="mod mod-photo">{image_html(module.image, project_dir, 64)}</div>'
-    body = f'<div class="mod-text">{inline_markup(module.text)}</div>' if module.text else ""
+    body = f'<div class="mod-text">{inline_markup(module.text)}</div>' if module.text else hint
     classes = "mod mod-framed" if module.framed else "mod"
     if module.kind == "ad":
         classes += " mod-ad"
@@ -253,7 +256,7 @@ def _article_html(
         body_parts.insert(0, figure)
     if article.continued_on:
         body_parts.append(
-            f'<div class="jump">ПРОДОЛЖЕНIЕ НА СТР. {article.continued_on} &#9656;</div>'
+            f'<div class="jump">ПРОДОЛЖЕНИЕ НА СТР. {article.continued_on} &#9656;</div>'
         )
 
     column_style = (
@@ -305,7 +308,9 @@ def _block_html(
     elif block.modules:
         inner = (
             f'<div class="modules js-fit" data-fit="{block.id}">'
-            + "".join(module_html(module, project_dir) for module in block.modules)
+            + "".join(
+                module_html(module, project_dir, options.for_export) for module in block.modules
+            )
             + "</div>"
         )
     else:
@@ -324,18 +329,25 @@ def _block_html(
 # -------------------------------------------------------------------------- шапка
 
 
-def masthead_html(project: Project, page: Page) -> str:
+def masthead_html(project: Project, page: Page, options_for_export: bool = False) -> str:
     brand: Brand = project.brand
     issue = project.issue
     if not page.show_masthead:
         running = f"{issue.title} · № {issue.number} · {issue.date}"
         return f'<div class="running-head">{esc(running.upper())}</div>'
 
-    service = (
-        f'<div class="service"><div>№ {esc(issue.number)} · {esc(issue.year_line.upper())}</div>'
-        f"<div>{esc(issue.city.upper())} · {esc(issue.date.upper())}</div>"
-        f"<div>ЦЕНА {esc(issue.price.upper())}</div></div>"
-    )
+    def join(*parts: str) -> str:
+        return " · ".join(part for part in parts if part.strip())
+
+    left = join(f"№ {issue.number}" if issue.number.strip() else "", issue.year_line)
+    middle = join(issue.city, issue.date)
+    right = f"ЦЕНА {issue.price}" if issue.price.strip() else ""
+    service = ""
+    if any((left, middle, right)):
+        service = (
+            f'<div class="service"><div>{esc(left.upper())}</div>'
+            f"<div>{esc(middle.upper())}</div><div>{esc(right.upper())}</div></div>"
+        )
 
     def side(text: str) -> str:
         head, *rest = (text or "").split("|")
@@ -344,6 +356,9 @@ def masthead_html(project: Project, page: Page) -> str:
         return f'<div class="side">{esc(head)}<br>{middle}<br>{tail}</div>'
 
     logo_text = brand.display_name
+    placeholder = not logo_text.strip()
+    if placeholder:
+        logo_text = "" if options_for_export else "НАЗВАНИЕ ИЗДАНИЯ"
     logo_font = fonts.resolve_for_text(brand.logo_font, logo_text)
     logo_size = brand.logo_size_pt * 96 / 72
     tracking = brand.tracking_permille / 1000
@@ -353,7 +368,9 @@ def masthead_html(project: Project, page: Page) -> str:
         if brand.superline_enabled and brand.superline
         else ""
     )
-    logo_class = "logo" + (" logo-framed" if brand.logo_direction == "framed" else "")
+    logo_class = "logo" + (" logo-framed" if brand.logo_font_preset == "framed" else "")
+    if placeholder:
+        logo_class += " logo-placeholder"
     logo = (
         f'<div class="{logo_class}" style="font-family:\'{logo_font}\',serif;'
         f"font-size:{logo_size:.1f}px;letter-spacing:{tracking:.3f}em;"
@@ -506,6 +523,8 @@ html,body{{margin:0;padding:0;background:#101112}}
 .quote-text{{font:italic 700 14px/1.3 '{heading}',serif;color:var(--ink)}}
 .quote-attr{{font:400 9px '{typo.caption_font}',sans-serif;letter-spacing:.12em;color:var(--faint);margin-top:5px}}
 .mod-photo{{margin-top:auto}}
+.mod-hint{{font:italic 400 10px/1.4 '{typo.body_font}',serif;color:#8a8172}}
+.logo-placeholder{{color:#9b9182}}
 .empty-block{{flex:1;display:flex;align-items:center;justify-content:center;
   border:1px dashed rgba(90,81,69,.55);font:400 10px 'IBM Plex Mono',monospace;color:#6b6354;
   letter-spacing:.06em;text-align:center;padding:8px}}
@@ -572,7 +591,7 @@ def page_body_html(
 
     return (
         '<div class="sheet" id="sheet">'
-        f'<div class="inner">{masthead_html(project, page)}'
+        f'<div class="inner">{masthead_html(project, page, options.for_export)}'
         f'<div class="stack">{"".join(rows_html)}</div>'
         f"{folio_html(project, page_index)}</div>{layers}</div>"
     )
