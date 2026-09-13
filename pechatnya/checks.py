@@ -63,6 +63,18 @@ def inspect(
             Finding(WARNING, f"статья «{article.title}» не размещена на полосе")
         )
 
+    for article in project.articles:
+        if article.split_is_stale:
+            page = project.page_of_article(article.id, part=0)
+            findings.append(
+                Finding(
+                    WARNING,
+                    f"текст статьи «{article.title}» правили после переноса — "
+                    "точку разрыва надо пересчитать",
+                    page=page + 1 if page is not None else None,
+                )
+            )
+
     for index, page in enumerate(project.pages, start=1):
         empty = [block for block in page.blocks() if block.is_empty]
         if empty:

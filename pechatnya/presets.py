@@ -408,6 +408,16 @@ TEMPLATES_BY_ID = {template.id: template for template in GRID_TEMPLATES}
 
 
 def build_page(template_id: str, kind: str = "front") -> Page:
+    """Собирает полосу по шаблону. ``user:<id>`` — своя сохранённая сетка."""
+    if template_id.startswith("user:"):
+        root = _user_template_root(template_id.split(":", 1)[1])
+        if root is not None:
+            return Page(
+                kind=kind,
+                template_id=template_id,
+                show_masthead=(kind == "front"),
+                root=root,
+            )
     template = TEMPLATES_BY_ID.get(template_id, GRID_TEMPLATES[0])
     return Page(
         kind=kind,
@@ -417,19 +427,42 @@ def build_page(template_id: str, kind: str = "front") -> Page:
     )
 
 
+def _user_template_root(template_id: str):
+    """Копия дерева своей сетки со свежими идентификаторами."""
+    from . import storage
+    from .models import Frame, new_id
+    from .serde import from_dict, to_dict
+
+    saved = next((item for item in storage.user_templates() if item.id == template_id), None)
+    if saved is None:
+        return None
+    root = from_dict(Frame, to_dict(saved.root))
+    for frame in root.walk():
+        frame.id = new_id("frm")
+        if frame.block is not None:
+            frame.block.id = new_id("blk")
+            frame.block.article_id = None
+            frame.block.article_part = 0
+    return root
+
+
 def apply_template(page: Page, template_id: str) -> None:
     """Меняет сетку полосы, стараясь сохранить уже размещённые статьи."""
-    placed = [block.article_id for block in page.blocks() if block.article_id]
+    placed = [
+        (block.article_id, block.article_part) for block in page.blocks() if block.article_id
+    ]
     modules = [block.modules for block in page.blocks() if block.modules]
     page.root = TEMPLATES_BY_ID.get(template_id, GRID_TEMPLATES[0]).build()
     page.template_id = template_id
     blocks = list(page.blocks())
-    for block, article_id in zip(blocks, placed):
+    for block, (article_id, part) in zip(blocks, placed):
         block.article_id = article_id
+        block.article_part = part  # продолжение остаётся продолжением
         block.kind = "article"
     for block, stack in zip(blocks[len(placed):], modules):
         block.modules = stack
         block.kind = "module"
+    page.normalize()
 
 
 # ------------------------------------------------------- стартовые проекты

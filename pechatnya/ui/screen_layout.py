@@ -246,8 +246,7 @@ class LayoutScreen:
         app = self.app
         app.selected_block_id = block.id
         if block.article_id:
-            app.editing_article_id = block.article_id
-            app.navigate("article")
+            app.edit_article(block.article_id)
         else:
             app.rebuild()
 
@@ -507,7 +506,15 @@ def _article_row(app: AppState, article: Article) -> ft.Control:
     if overflow and fit is not None:
         lines.append(
             ft.Row(
-                [c.dot(t.WARN), t.hint(f"не помещается: {fit.overflow_chars} зн.", size=11, color=t.WARN)],
+                [c.dot(t.WARN),
+                 t.hint(f"не помещается: {fit.overflow_chars} зн.", size=11, color=t.WARN)],
+                spacing=6,
+            )
+        )
+    elif article.split_is_stale:
+        lines.append(
+            ft.Row(
+                [c.dot(t.WARN), t.hint("перенос устарел", size=11, color=t.WARN)],
                 spacing=6,
             )
         )
@@ -557,20 +564,17 @@ def _select_article(app: AppState, article_id: str) -> None:
                 app.current_page = page_index
                 app.select_block(block.id)
                 return
-    app.editing_article_id = article_id
-    app.navigate("article")
+    app.edit_article(article_id)
 
 
 def _edit(app: AppState, article_id: str) -> None:
-    app.editing_article_id = article_id
-    app.navigate("article")
+    app.edit_article(article_id)
 
 
 def _add_article(app: AppState) -> None:
     article = Article(rubric="", title="Новая статья", body="")
     app.project.articles.append(article)
-    app.editing_article_id = article.id
-    app.navigate("article")
+    app.edit_article(article.id)
 
 
 def _add_module(app: AppState, kind: str) -> None:

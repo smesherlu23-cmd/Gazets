@@ -272,6 +272,7 @@ def _article_html(
     style: Style,
     project_dir: Optional[pathlib.Path],
     from_page: Optional[int] = None,
+    to_page: Optional[int] = None,
 ) -> str:
     """Блок статьи. ``block.article_part == 1`` — это «продолжение» на другой полосе."""
     continuation = block.article_part == 1
@@ -326,10 +327,8 @@ def _article_html(
             figure = ""
     if figure:
         body_parts.insert(0, figure)
-    if article.continued_on and not continuation:
-        body_parts.append(
-            f'<div class="jump">ПРОДОЛЖЕНИЕ НА СТР. {article.continued_on} &#9656;</div>'
-        )
+    if to_page and not continuation:
+        body_parts.append(f'<div class="jump">ПРОДОЛЖЕНИЕ НА СТР. {to_page} &#9656;</div>')
 
     column_style = (
         f"column-count:{max(1, block.columns)};column-gap:{block.column_gap:.1f}px;"
@@ -388,12 +387,15 @@ def _block_html(
 
     article = project.article(block.article_id)
     if article is not None:
-        from_page = None
+        from_page = to_page = None
         if block.article_part == 1:
             source_page = project.page_of_article(block.article_id, part=0)
             from_page = source_page + 1 if source_page is not None else None
+        else:
+            tail_page = project.page_of_article(block.article_id, part=1)
+            to_page = tail_page + 1 if tail_page is not None else None
         inner = _article_html(
-            article, block, project.typography, project.style, project_dir, from_page
+            article, block, project.typography, project.style, project_dir, from_page, to_page
         )
     elif block.modules:
         inner = (

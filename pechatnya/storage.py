@@ -140,6 +140,9 @@ def load_project(path: pathlib.Path) -> Project:
     # оформление берём из библиотеки: правка издания видна во всех его номерах,
     # а если издания в библиотеке нет (файл принесли с другой машины) — остаётся
     # снимок, сохранённый внутри проекта.
+    for page in project.pages:
+        page.normalize()
+    project.repair_continuations()
     known = publication(project.publication_id) if project.publication_id else None
     if known is not None:
         project.inherit(known)

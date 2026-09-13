@@ -70,7 +70,6 @@ def sample_project() -> Project:
             caption="Третий пролёт утром 12 июня. Балку разбирали вручную, при фонарях.",
             height_px=96,
         ),
-        continued_on=3,
     )
     footer = [
         Article(

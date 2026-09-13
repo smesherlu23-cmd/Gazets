@@ -78,3 +78,16 @@ def test_summary_counts_by_level() -> None:
 def test_finding_label_mentions_the_page() -> None:
     assert checks.Finding(checks.NOTE, "пусто", page=3).label.startswith("Полоса 3:")
     assert checks.Finding(checks.NOTE, "пусто").label == "пусто"
+
+
+def test_stale_split_is_reported() -> None:
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 1, 900)
+    assert not [f for f in checks.inspect(project) if "точку разрыва" in f.text]
+
+    lead.body = "Новая врезка. " + lead.body
+
+    stale = [f for f in checks.inspect(project) if "точку разрыва" in f.text]
+    assert len(stale) == 1
+    assert stale[0].page == 1

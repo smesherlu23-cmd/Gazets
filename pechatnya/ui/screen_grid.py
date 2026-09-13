@@ -28,6 +28,7 @@ def build(app: AppState) -> ft.Control:
                 app.rebuild()
             else:
                 apply_template(app.page_model, template_id)
+                app.project.repair_continuations()
                 app.selected_block_id = None
                 app.touch(rebuild=True, immediate=True)
 
@@ -328,9 +329,9 @@ def _add_page(app: AppState) -> None:
 
 
 def _use_template(app: AppState, template_id: str, in_wizard: bool) -> None:
-    """Применяет свой шаблон к текущей полосе."""
+    """Применяет свою сетку: в мастере — к будущей полосе, иначе — к текущей."""
     if in_wizard:
-        app.busy_note = "Свои сетки применяются к уже собранной полосе"
+        app.wizard.template_id = f"user:{template_id}"
         app.rebuild()
         return
     app.apply_user_template(template_id)
