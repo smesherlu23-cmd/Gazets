@@ -34,7 +34,9 @@ def test_page_document_contains_masthead_and_fonts() -> None:
 
     assert "@font-face" in html
     assert project.brand.display_name in html
-    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" in html
+    # заголовок набирается с неразрывными пробелами, поэтому ищем слово из него
+    assert "обвал" in html
+    assert project.articles[0].rubric in html
     assert 'data-fit=' in html  # крючки для замера вместимости
     assert "column-count:3" in html
 
@@ -89,6 +91,7 @@ def test_guides_and_borders_only_in_preview() -> None:
 def test_continuation_splits_text_between_pages() -> None:
     """Остаток статьи печатается на другой полосе со ссылками в обе стороны."""
     project = sample_project()
+    project.style.typography_polish = False  # сравниваем текст как набран
     lead = project.articles[0]
     split_at = 900
 
@@ -121,3 +124,20 @@ def test_dropping_continuation_returns_whole_text() -> None:
     assert project.block_of(lead.id, part=1) is None
     assert lead.part_text(0) == lead.body
     assert "ПРОДОЛЖЕНИЕ НА СТР." not in page_document(project, 0)
+
+
+def test_jump_line_points_at_the_page_that_holds_the_tail() -> None:
+    """Полосы переставили — «продолжение на стр.» пересчитывается по факту."""
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 2, 900)
+    options = RenderOptions(show_paper=False, for_export=True)
+
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" in page_document(project, 0, options, None)
+
+    project.pages[1], project.pages[2] = project.pages[2], project.pages[1]
+
+    head = page_document(project, 0, options, None)
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 2" in head
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" not in head
+    assert "НАЧАЛО НА СТР. 1" in page_document(project, 1, options, None)

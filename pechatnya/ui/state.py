@@ -18,7 +18,7 @@ from typing import Callable, Optional
 import flet as ft
 
 from .. import storage
-from ..models import Block, BlockFit, Issue, Project, Publication
+from ..models import Block, BlockFit, Frame, Issue, Project, Publication, new_id
 from ..presets import new_project
 from ..serde import from_dict, to_dict
 from ..render.engine import engine, engine_report
@@ -61,6 +61,7 @@ class AppState:
         self.show_guides = True
         self.show_paper = True
         self.show_borders = False
+        self.snap_to_grid = True
 
         self._undo: list[str] = []
         self._redo: list[str] = []
@@ -108,7 +109,20 @@ class AppState:
 
     def navigate(self, route: str) -> None:
         self.route = route
+        self.busy_note = ""  # сообщение о прошлом действии не висит вечно
         self.rebuild()
+
+    def edit_article(self, article_id: str) -> None:
+        """Открывает редактор статьи и показывает ту полосу, где она стоит."""
+        self.editing_article_id = article_id
+        page_index = self.project.page_of_article(article_id, part=0)
+        if page_index is not None and page_index != self.current_page:
+            self.current_page = page_index
+            self.selected_block_id = None
+            self.refresh_preview(immediate=True)
+        article = self.project.article(article_id)
+        self.continuation_target = (article.continued_on or 0) if article else 0
+        self.navigate("article")
 
     def rebuild(self) -> None:
         if self._rebuild is not None:
@@ -244,6 +258,8 @@ class AppState:
         self.project = Project.from_json_dict(json.loads(snapshot))
         self._snapshot = snapshot
         self._snapshot_at = time.monotonic()
+        # Полос могло стать меньше — иначе в строке состояния «полоса 5 из 4».
+        self.current_page = max(0, min(self.current_page, len(self.project.pages) - 1))
         if self.selected_block_id and self.selected_block is None:
             self.selected_block_id = None
         self.dirty = True
@@ -332,7 +348,11 @@ class AppState:
             self.touch(rebuild=True, immediate=True)
 
     def remove_block(self, block_id: str) -> None:
+        block = self.page_model.find_block(block_id)
+        if block is not None:
+            self.project.release_block(block)
         if self.page_model.remove_block(block_id):
+            self.project.repair_continuations()
             if self.selected_block_id == block_id:
                 self.selected_block_id = None
             self.touch(rebuild=True, immediate=True)
@@ -347,6 +367,64 @@ class AppState:
     def add_block(self, direction: str = "column") -> None:
         fresh = self.page_model.add_block(direction)
         self.selected_block_id = fresh.id
+        self.touch(rebuild=True, immediate=True)
+
+    def save_page_as_template(self, name: str = "") -> None:
+        """Сохраняет сетку текущей полосы, чтобы применять её к другим полосам."""
+        from ..serde import from_dict as _from_dict, to_dict as _to_dict
+
+        page = self.page_model
+        root = _from_dict(Frame, _to_dict(page.root))
+        for frame in root.walk():
+            frame.id = new_id("frm")
+            if frame.block is not None:
+                frame.block.id = new_id("blk")
+                frame.block.article_id = None
+                frame.block.article_part = 0
+                frame.block.modules = []
+                if frame.block.kind != "empty":
+                    frame.block.kind = "empty"
+        template = storage.UserTemplate(
+            name=name or f"Сетка полосы {self.current_page + 1}",
+            kind=page.kind,
+            blocks=sum(1 for _ in root.leaves()),
+            root=root,
+        )
+        storage.save_user_template(template)
+        self.busy_note = f"Сетка сохранена как «{template.name}»"
+        self.rebuild()
+
+    def apply_user_template(self, template_id: str) -> None:
+        template = next(
+            (item for item in storage.user_templates() if item.id == template_id), None
+        )
+        if template is None:
+            return
+        from ..serde import from_dict as _from_dict, to_dict as _to_dict
+
+        page = self.page_model
+        placed = [
+            (block.article_id, block.article_part) for block in page.blocks() if block.article_id
+        ]
+        modules = [block.modules for block in page.blocks() if block.modules]
+        root = _from_dict(Frame, _to_dict(template.root))
+        for frame in root.walk():
+            frame.id = new_id("frm")
+            if frame.block is not None:
+                frame.block.id = new_id("blk")
+        page.root = root
+        page.template_id = f"user:{template.id}"
+        blocks = list(page.blocks())
+        for block, (article_id, part) in zip(blocks, placed):
+            block.article_id = article_id
+            block.article_part = part
+            block.kind = "article"
+        for block, stack in zip(blocks[len(placed):], modules):
+            block.modules = stack
+            block.kind = "module"
+        page.normalize()
+        self.project.repair_continuations()
+        self.selected_block_id = None
         self.touch(rebuild=True, immediate=True)
 
     # ------------------------------------------------------------- полосы
@@ -377,6 +455,7 @@ class AppState:
                 if frame.block.kind == "article":
                     frame.block.kind = "empty"
         self.project.pages.insert(index + 1, copy)
+        self.project.repair_continuations()
         self.project.issue.pages_count = len(self.project.pages)
         self.current_page = index + 1
         self.selected_block_id = None
@@ -387,10 +466,10 @@ class AppState:
             self.busy_note = "В выпуске должна остаться хотя бы одна полоса"
             self.rebuild()
             return
-        for block in self.project.pages[index].blocks():
-            if block.article_id:
-                self.project.detach(block.article_id)
+        for block in list(self.project.pages[index].blocks()):
+            self.project.release_block(block)
         self.project.pages.pop(index)
+        self.project.repair_continuations()
         self.project.issue.pages_count = len(self.project.pages)
         self.current_page = max(0, min(self.current_page, len(self.project.pages) - 1))
         self.selected_block_id = None
@@ -402,6 +481,7 @@ class AppState:
             return
         pages = self.project.pages
         pages[index], pages[target] = pages[target], pages[index]
+        self.project.repair_continuations()
         self.current_page = target
         self.touch(rebuild=True, immediate=True)
 
@@ -435,8 +515,9 @@ class AppState:
                     self.busy_note = "Статья помещается целиком — перенос не нужен"
                 elif point <= 0:
                     self.busy_note = "В блок не влезает даже начало статьи"
+                elif self.project.place_continuation(article_id, page_index, point) is None:
+                    self.busy_note = f"На полосе {page_index + 1} некуда положить остаток"
                 else:
-                    self.project.place_continuation(article_id, page_index, point)
                     self.busy_note = (
                         f"Остаток ({len(article.part_text(1))} зн.) перенесён "
                         f"на полосу {page_index + 1}"
@@ -575,6 +656,7 @@ class AppState:
         return block
 
     def select_block(self, block_id: Optional[str]) -> None:
+        self.busy_note = ""
         self.selected_block_id = block_id
         if block_id:
             self.panel_tab = "block"

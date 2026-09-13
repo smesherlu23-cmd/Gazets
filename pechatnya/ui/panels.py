@@ -12,7 +12,7 @@ import flet as ft
 
 from .. import storage
 from ..models import ImageRef
-from ..presets import MODULE_TITLES
+from ..presets import MODULE_HINTS, MODULE_TITLES
 from . import common as c
 from . import theme as t
 from .state import AppState
@@ -485,13 +485,29 @@ def _continuation_section(app: AppState, article, block) -> list[ft.Control]:
         ),
     ]
     if article.split_at is not None:
-        controls.append(
-            t.hint(
-                f"Перенесено {len(article.part_text(1))} зн. на стр. {article.continued_on}",
-                size=11,
-                color=t.OK_TEXT,
+        if article.split_is_stale:
+            controls.append(
+                t.hint(
+                    "Текст правили после переноса — точку разрыва надо пересчитать.",
+                    size=11,
+                    color=t.WARN,
+                )
             )
-        )
+            controls.append(
+                c.secondary_button(
+                    "Подогнать перенос",
+                    lambda _e: app.split_article(article.id, (article.continued_on or 1) - 1),
+                    height=30,
+                )
+            )
+        else:
+            controls.append(
+                t.hint(
+                    f"Перенесено {len(article.part_text(1))} зн. на стр. {article.continued_on}",
+                    size=11,
+                    color=t.OK_TEXT,
+                )
+            )
         controls.append(c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id)))
     else:
         controls.append(
@@ -600,29 +616,44 @@ def _module_editor(app: AppState, index: int, module) -> ft.Control:
     if module.kind != "quote":
         controls.append(c.field("", module.title, field("title"), hint="заголовок модуля",
                                 height=30))
-    if module.kind == "rates":
+    if module.kind in ("rates", "schedule", "list"):
+        hints = {
+            "rates": ("статья расхода", "цена"),
+            "schedule": ("время", "событие"),
+            "list": ("пункт перечня", ""),
+        }[module.kind]
         rows = module.rows or [["", ""], ["", ""], ["", ""]]
         for row_index, row in enumerate(rows):
+            left = c.field("", row[0] if row else "", set_row(row_index, 0),
+                           hint=hints[0], height=30)
+            if module.kind == "list":
+                controls.append(
+                    ft.Row(
+                        [
+                            ft.Container(left, expand=True),
+                            _row_remove(app, module, row_index),
+                        ],
+                        spacing=4,
+                        vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                    )
+                )
+                continue
             controls.append(
                 ft.Row(
                     [
-                        ft.Container(
-                            c.field("", row[0] if row else "", set_row(row_index, 0),
-                                    hint="статья", height=30),
-                            expand=3,
-                        ),
+                        ft.Container(left, expand=3 if module.kind == "rates" else 2),
                         ft.Container(
                             c.field("", row[1] if len(row) > 1 else "", set_row(row_index, 1),
-                                    hint="цена", height=30),
-                            expand=2,
+                                    hint=hints[1], height=30),
+                            expand=2 if module.kind == "rates" else 3,
                         ),
+                        _row_remove(app, module, row_index),
                     ],
-                    spacing=8,
+                    spacing=4,
+                    vertical_alignment=ft.CrossAxisAlignment.CENTER,
                 )
             )
-        controls.append(
-            c.ghost_button("+ строка", lambda _e: _add_rate_row(app, module))
-        )
+        controls.append(c.ghost_button("+ строка", lambda _e: _add_rate_row(app, module)))
     elif module.kind == "photo":
         controls.append(
             c.secondary_button("Выбрать снимок…",
@@ -633,8 +664,10 @@ def _module_editor(app: AppState, index: int, module) -> ft.Control:
             controls.append(c.field("", module.image.caption, _module_caption(app, module),
                                     hint="подпись под снимком", height=30))
     else:
-        controls.append(c.field("", module.text, field("text"), multiline=True,
-                                hint="текст модуля"))
+        controls.append(
+            c.field("", module.text, field("text"), multiline=True,
+                    hint=MODULE_HINTS.get(module.kind, "текст модуля"))
+        )
     if module.kind == "quote":
         controls.append(c.field("", module.attribution, field("attribution"),
                                 hint="кто сказал", height=30))
@@ -660,8 +693,25 @@ def _module_caption(app: AppState, module):
     return handler
 
 
+def _row_remove(app: AppState, module, index: int) -> ft.Control:
+    """Крестик у строки модуля — убрать её из перечня или таблицы."""
+    return ft.Container(
+        content=ft.Icon(ft.Icons.CLOSE, size=12, color=t.TEXT_FAINT),
+        on_click=lambda _e: _drop_row(app, module, index),
+        padding=4,
+        ink=True,
+        tooltip="Убрать строку",
+    )
+
+
+def _drop_row(app: AppState, module, index: int) -> None:
+    if 0 <= index < len(module.rows):
+        module.rows.pop(index)
+        app.touch(rebuild=True)
+
+
 def _add_rate_row(app: AppState, module) -> None:
-    module.rows.append(["", ""])
+    module.rows.append([""] if module.kind == "list" else ["", ""])
     app.touch(rebuild=True)
 
 
@@ -687,8 +737,7 @@ def _remove_module(app: AppState, index: int) -> None:
 
 
 def _edit_article(app: AppState, article_id: str) -> None:
-    app.editing_article_id = article_id
-    app.navigate("article")
+    app.edit_article(article_id)
 
 
 def _detach(app: AppState, article_id: str) -> None:

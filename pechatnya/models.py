@@ -173,6 +173,12 @@ class Article:
     block_id: Optional[str] = None
     continued_on: Optional[int] = None
     split_at: Optional[int] = None  # сколько знаков уходит в первую часть
+    split_source_len: Optional[int] = None  # длина текста, при которой считали перенос
+
+    @property
+    def split_is_stale(self) -> bool:
+        """Текст правили после переноса — точку разрыва надо пересчитать."""
+        return self.split_at is not None and self.split_source_len != len(self.body)
 
     def part_text(self, part: int) -> str:
         """Текст части: 0 — начало до разрыва, 1 — остаток для «продолжения»."""
@@ -296,6 +302,22 @@ def column(*children: Frame, weight: float = 1.0, fixed: Optional[float] = None,
     return Frame(direction="column", children=list(children), weight=weight, fixed=fixed, gap=gap)
 
 
+def _prune_frame(frame: Frame) -> bool:
+    """Оставляет узел в дереве или сообщает, что он пуст и его надо выбросить."""
+    if frame.is_leaf:
+        return frame.block is not None
+    frame.children = [child for child in frame.children if _prune_frame(child)]
+    if not frame.children:
+        return False
+    if len(frame.children) == 1:
+        only = frame.children[0]
+        frame.direction = only.direction
+        frame.children = only.children
+        frame.block = only.block
+        frame.gap = only.gap
+    return True
+
+
 @dataclass
 class Page:
     """Полоса выпуска: шапка, дерево блоков, колонцифра."""
@@ -349,6 +371,7 @@ class Page:
             frame.block = None
             frame.direction = direction
             frame.children = [moved, leaf(fresh)]
+        self.normalize()
         return fresh
 
     def remove_block(self, block_id: str) -> bool:
@@ -360,22 +383,18 @@ class Page:
         if parent is None or len(list(self.leaves())) <= 1:
             return False
         parent.children.remove(frame)
-        self._collapse(parent)
+        self.normalize()
         return True
 
-    def _collapse(self, parent: Frame) -> None:
-        """Контейнер с одним ребёнком схлопывается — дерево не зарастает."""
-        while len(parent.children) == 1:
-            only = parent.children[0]
-            parent.direction = only.direction
-            parent.children = only.children
-            parent.block = only.block
-            parent.gap = only.gap
-            if parent.is_leaf:
-                return
-        for child in list(parent.children):
-            if not child.is_leaf and not child.children:
-                parent.children.remove(child)
+    def normalize(self) -> None:
+        """Приводит дерево в порядок после любой перестройки.
+
+        Убирает опустевшие контейнеры и схлопывает те, где остался один ребёнок:
+        иначе в сетке копятся невидимые узлы, а превью и ручки границ начинают
+        врать. Полоса без единого блока получает пустой блок.
+        """
+        if not _prune_frame(self.root):
+            self.root = column(leaf(Block(label="Блок")))
 
     def move_block(self, block_id: str, delta: int) -> bool:
         """Меняет блок местами с соседом внутри контейнера."""
@@ -411,6 +430,7 @@ class Page:
             )
             self.root.direction = direction
             self.root.children = [inner, leaf(fresh)]
+        self.normalize()
         return fresh
 
 
@@ -434,6 +454,8 @@ class Style:
     masthead_frame: str = "double_rule"
     rubric_caps: bool = True
     ink_spread: bool = True  # text-shadow — имитация растекания краски
+    typography_polish: bool = True  # кавычки-ёлочки, тире, неразрывные пробелы
+    trim_partial_lines: bool = True  # не показывать обрезанную половину строки
     uppercase_headlines: bool = False
     invert_rubrics: bool = False
 
@@ -572,7 +594,15 @@ class Project:
         return [item for item in self.articles if item.id not in placed]
 
     def assign(self, article_id: str, block_id: str) -> None:
-        """Кладёт статью в блок, освобождая тот блок, где она лежала раньше."""
+        """Кладёт статью в блок целиком, освобождая прежние блоки.
+
+        Если статья была разделена между полосами, перенос отменяется: иначе
+        остаток текста остался бы нигде, а на полосе висела бы строка
+        «продолжение на стр.», ведущая в пустоту.
+        """
+        article = self.article(article_id)
+        if article is not None and article.split_at is not None:
+            self.drop_continuation(article_id)
         for page in self.pages:
             for block in page.blocks():
                 if block.article_id == article_id:
@@ -583,17 +613,17 @@ class Project:
         _, target = self.find_block(block_id)
         if target is None:
             return
-        previous = target.article_id
+        # в блоке мог лежать чужой материал — снимаем его целиком, иначе у той
+        # статьи остался бы висячий перенос без начала
+        if target.article_id and target.article_id != article_id:
+            self.release_block(target)
         target.article_id = article_id
+        target.article_part = 0
         target.kind = "article"
         target.modules = []
-        article = self.article(article_id)
-        if article:
+        if article is not None:
             article.block_id = block_id
-        if previous and previous != article_id:
-            stale = self.article(previous)
-            if stale:
-                stale.block_id = None
+        self.repair_continuations()
 
     def detach(self, article_id: str) -> None:
         """Снимает статью с полосы целиком — вместе с блоком «продолжения»."""
@@ -608,6 +638,7 @@ class Project:
             article.block_id = None
             article.continued_on = None
             article.split_at = None
+            article.split_source_len = None
 
     # ------------------------------------------------- продолжение на стр. N
     def block_of(self, article_id: str, part: int = 0) -> Optional[Block]:
@@ -628,17 +659,20 @@ class Project:
         article = self.article(article_id)
         if article is None:
             return None
-        target = self.block_of(article_id, part=1) or self.free_block_on(page_index)
-        if target is None:
-            return None
         source = self.block_of(article_id, part=0)
-        if source is not None and source.id == target.id:
+        if source is None:
+            return None  # переносить нечего: статья не размещена
+        target = self.block_of(article_id, part=1) or self.free_block_on(page_index)
+        if target is None or target.id == source.id:
             return None
+        if target.article_id and target.article_id != article_id:
+            self.release_block(target)
         target.article_id = article_id
         target.article_part = 1
         target.kind = "article"
         target.modules = []
         article.split_at = max(1, split_at)
+        article.split_source_len = len(article.body)
         article.continued_on = page_index + 1
         return target
 
@@ -651,7 +685,45 @@ class Project:
         article = self.article(article_id)
         if article is not None:
             article.split_at = None
+            article.split_source_len = None
             article.continued_on = None
+
+    def release_block(self, block: "Block") -> None:
+        """Готовит блок к удалению: снимает с него статью, не теряя текст.
+
+        Блок с продолжением — отменяем перенос, статья остаётся целой на своей
+        полосе. Блок с началом статьи — снимаем статью с полосы совсем.
+        """
+        if not block.article_id:
+            return
+        if block.article_part == 1:
+            self.drop_continuation(block.article_id)
+        else:
+            self.detach(block.article_id)
+
+    def repair_continuations(self) -> int:
+        """Снимает переносы, у которых потерялась одна из частей.
+
+        Такое бывает после смены сетки или удаления полосы: иначе на полосе
+        осталась бы строка «продолжение на стр.», ведущая в никуда, а хвост
+        текста пропал бы из выпуска.
+        """
+        repaired = 0
+        for article in self.articles:
+            if article.split_at is None and article.continued_on is None:
+                continue
+            head = self.block_of(article.id, part=0)
+            tail = self.block_of(article.id, part=1)
+            if head is None or tail is None:
+                self.drop_continuation(article.id)
+                repaired += 1
+                continue
+            page = self.page_of_block(tail.id)
+            if page is not None and article.continued_on != page + 1:
+                # Полосы переставили — номер в строке «продолжение на стр.» устарел.
+                article.continued_on = page + 1
+                repaired += 1
+        return repaired
 
     def page_of_article(self, article_id: str, part: int = 0) -> Optional[int]:
         block = self.block_of(article_id, part)

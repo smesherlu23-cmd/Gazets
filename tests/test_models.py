@@ -257,3 +257,66 @@ def test_old_project_with_flat_rows_is_migrated() -> None:
     assert side is not None and side.fixed == 196.0
     assert page.root.children[1].fixed == 120.0
     assert project.article("art-1") is not None
+
+
+# --------------------------------------------- продолжение и перестановки
+
+
+def test_reassigning_a_split_article_cancels_the_continuation() -> None:
+    """Перетащили статью в другой блок — остаток текста не должен пропасть."""
+    from tests.fixtures import sample_project
+
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 1, 900)
+    target = project.free_block_on(2)
+
+    project.assign(lead.id, target.id)
+
+    assert lead.split_at is None
+    assert lead.continued_on is None
+    assert project.block_of(lead.id, part=1) is None
+    assert lead.part_text(0) == lead.body  # текст снова целый
+
+
+def test_releasing_the_tail_block_keeps_the_article_whole() -> None:
+    from tests.fixtures import sample_project
+
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 1, 900)
+    tail = project.block_of(lead.id, part=1)
+
+    project.release_block(tail)
+
+    assert lead.split_at is None
+    assert project.block_of(lead.id, part=0) is not None  # начало осталось на полосе
+
+
+def test_releasing_the_head_block_takes_the_article_off_the_page() -> None:
+    from tests.fixtures import sample_project
+
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 1, 900)
+    head = project.block_of(lead.id, part=0)
+
+    project.release_block(head)
+
+    assert project.block_of(lead.id, part=0) is None
+    assert project.block_of(lead.id, part=1) is None
+    assert lead in project.unplaced_articles()
+
+
+def test_template_change_keeps_continuation_parts() -> None:
+    """Смена сетки не должна превращать продолжение во второй экземпляр начала."""
+    from tests.fixtures import sample_project
+
+    project = sample_project()
+    lead = project.articles[0]
+    page = project.pages[1]
+    project.place_continuation(lead.id, 1, 900)
+    apply_template(page, "gallery")
+
+    parts = sorted(block.article_part for block in page.blocks() if block.article_id == lead.id)
+    assert parts == [1]  # продолжение осталось продолжением, дубля начала нет

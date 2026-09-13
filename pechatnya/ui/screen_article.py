@@ -278,14 +278,24 @@ class ArticleScreen:
                 )
             )
             if article.split_at is not None:
-                continuation_controls.append(
-                    t.hint(
-                        f"Остаток {len(article.part_text(1))} зн. стоит на стр. "
-                        f"{article.continued_on}",
-                        size=11,
-                        color=t.OK_TEXT,
+                if article.split_is_stale:
+                    continuation_controls.append(
+                        t.hint(
+                            "Текст изменился — нажмите «Перенести остаток», чтобы "
+                            "пересчитать точку разрыва.",
+                            size=11,
+                            color=t.WARN,
+                        )
                     )
-                )
+                else:
+                    continuation_controls.append(
+                        t.hint(
+                            f"Остаток {len(article.part_text(1))} зн. стоит на стр. "
+                            f"{article.continued_on}",
+                            size=11,
+                            color=t.OK_TEXT,
+                        )
+                    )
                 continuation_controls.append(
                     c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id))
                 )

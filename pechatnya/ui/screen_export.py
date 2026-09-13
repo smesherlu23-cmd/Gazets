@@ -11,7 +11,7 @@ import threading
 
 import flet as ft
 
-from .. import storage
+from .. import checks, storage
 from ..render.export import (
     DPI_CHOICES,
     ExportSettings,
@@ -38,6 +38,7 @@ class ExportScreen:
         self.progress = ft.ProgressBar(value=0, color=t.ACCENT, bgcolor=t.BORDER_PANEL, height=4)
         self.status = ft.Text("", size=11, color=t.TEXT_MUTED, font_family=t.MONO)
         self.busy = False
+        self.findings: list[checks.Finding] | None = None
 
     # ------------------------------------------------------------------ действия
     def _set(self, field: str, value) -> None:
@@ -82,6 +83,58 @@ class ExportScreen:
             self.app.page.update()
         except Exception:
             pass
+
+    def _inspect(self, _event=None) -> None:
+        """Проверка выпуска: замечания собираются в фоне, окно не подвисает."""
+        if self.busy:
+            return
+        self.busy = True
+        self.status.value = "проверяем полосы…"
+        self.progress.value = None
+        self.app.page.update()
+
+        def worker() -> None:
+            from ..render.engine import engine
+
+            try:
+                self.findings = checks.inspect(
+                    self.app.project, self.app.project_dir, engine()
+                )
+                self.status.value = "проверка: " + checks.summary(self.findings)
+            except Exception as error:
+                self.status.value = f"проверка не удалась: {error}"
+            finally:
+                self.progress.value = 0
+                self.busy = False
+                self.app.rebuild()
+
+        threading.Thread(target=worker, name="pechatnya-checks", daemon=True).start()
+
+    def _findings_block(self) -> list[ft.Control]:
+        if self.findings is None:
+            return [
+                t.hint(
+                    "Проверка найдёт переполненные блоки, потерянные снимки, пустые модули "
+                    "и неразмещённые статьи на всех полосах.",
+                    size=11,
+                )
+            ]
+        if not self.findings:
+            return [t.hint("Замечаний нет — выпуск готов к выгрузке.", size=12, color=t.OK_TEXT)]
+        colors = {checks.ERROR: t.WARN, checks.WARNING: t.ACCENT_TEXT, checks.NOTE: t.TEXT_MUTED}
+        rows = [
+            ft.Row(
+                [
+                    c.dot(colors.get(item.level, t.TEXT_MUTED)),
+                    t.hint(item.label, size=11, color=colors.get(item.level, t.TEXT_MUTED)),
+                ],
+                spacing=8,
+            )
+            for item in self.findings[:12]
+        ]
+        if len(self.findings) > 12:
+            rows.append(t.hint(f"…и ещё {len(self.findings) - 12}", size=11))
+        return rows
 
     async def _choose_directory(self, _event=None) -> None:
         path = await self.app.file_picker().get_directory_path(dialog_title="Куда сохранить выпуск")
@@ -179,6 +232,18 @@ class ExportScreen:
                         else []
                     ),
                     spacing=4,
+                ),
+                c.panel_section(
+                    "Проверка выпуска",
+                    ft.Row(
+                        [
+                            c.secondary_button("Проверить выпуск", self._inspect, height=30),
+                            ft.Container(expand=True),
+                        ],
+                        spacing=10,
+                    ),
+                    *self._findings_block(),
+                    spacing=8,
                 ),
                 c.panel_section(
                     "Куда сохранить",

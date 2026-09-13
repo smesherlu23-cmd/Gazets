@@ -252,3 +252,215 @@ def test_split_needs_a_free_block() -> None:
 
     assert "нет свободного блока" in app.busy_note
     assert app.project.block_of(lead.id, part=1) is None
+
+
+# ------------------------------------------------------------- сетка полосы
+
+
+def test_split_and_remove_block_through_state() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    block = next(app.page_model.blocks())
+    before = len(list(app.page_model.blocks()))
+
+    app.split_block(block.id, "row")
+
+    assert len(list(app.page_model.blocks())) == before + 1
+    assert app.selected_block_id is not None  # новый блок сразу выделен
+    fresh = app.selected_block_id
+
+    app.remove_block(fresh)
+    assert len(list(app.page_model.blocks())) == before
+    assert app.selected_block_id is None
+
+
+def test_page_can_be_duplicated_and_removed() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    pages_before = len(app.project.pages)
+    grid_before = [block.label for block in app.project.pages[0].blocks()]
+
+    app.duplicate_page(0)
+
+    assert len(app.project.pages) == pages_before + 1
+    copy = app.project.pages[1]
+    assert [block.label for block in copy.blocks()] == grid_before
+    # копия не уводит статьи с исходной полосы
+    assert all(block.article_id is None for block in copy.blocks())
+    assert app.project.block_of(app.project.articles[0].id) is not None
+
+    app.remove_page(1)
+    assert len(app.project.pages) == pages_before
+
+
+def test_last_page_is_protected() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    while len(app.project.pages) > 1:
+        app.remove_page(len(app.project.pages) - 1)
+
+    app.remove_page(0)
+
+    assert len(app.project.pages) == 1
+    assert "хотя бы одна полоса" in app.busy_note
+
+
+def test_page_saved_as_template_can_be_applied(tmp_path) -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    app.current_page = 0
+    labels = [block.label for block in app.page_model.blocks()]
+
+    app.save_page_as_template("Моя передовица")
+
+    saved = storage.user_templates()
+    assert [item.name for item in saved] == ["Моя передовица"]
+    assert saved[0].blocks == len(labels)
+
+    app.current_page = 1  # другая полоса с другой сеткой
+    app.apply_user_template(saved[0].id)
+
+    assert [block.label for block in app.page_model.blocks()] == labels
+    # шаблон не тащит за собой чужие статьи
+    assert all(block.article_id is None for block in app.page_model.blocks())
+
+
+def test_zoom_to_fit_uses_the_sheet_size() -> None:
+    app = make_app()
+    app.project.page_format = "A3"
+
+    app.zoom_to_fit()
+    a3_zoom = app.zoom
+
+    app.project.page_format = "A4"
+    app.zoom_to_fit()
+
+    assert app.zoom > a3_zoom  # меньший лист помещается крупнее
+    assert 0.1 <= a3_zoom <= 2.0
+
+
+def test_removing_a_continuation_block_keeps_the_article() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    lead = app.project.articles[0]
+    app.project.place_continuation(lead.id, 1, 900)
+    app.current_page = 1
+    tail = app.project.block_of(lead.id, part=1)
+
+    app.remove_block(tail.id)
+
+    assert lead.split_at is None
+    assert app.project.block_of(lead.id, part=0) is not None
+
+
+def test_removing_the_continuation_page_keeps_the_article_on_its_page() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    lead = app.project.articles[0]
+    app.project.place_continuation(lead.id, 1, 900)
+
+    app.remove_page(1)
+
+    assert lead.split_at is None
+    assert app.project.block_of(lead.id, part=0) is not None  # статья осталась на первой полосе
+
+
+def test_user_template_can_be_chosen_in_the_wizard(tmp_path) -> None:
+    """Своя сетка выбирается и для нового выпуска, а не только для текущей полосы."""
+    from pechatnya.presets import build_page, new_project
+
+    app = make_app()
+    app.set_project(sample_project())
+    app.save_page_as_template("Передовица")
+    template = storage.user_templates()[0]
+
+    page = build_page(f"user:{template.id}", "front")
+
+    assert [block.label for block in page.blocks()] == [
+        block.label for block in app.project.pages[0].blocks()
+    ]
+    assert all(block.article_id is None for block in page.blocks())
+    fresh = new_project(template_id=f"user:{template.id}")
+    assert len(list(fresh.pages[0].blocks())) == template.blocks
+
+
+# --------------------------------------------------------- мелкие огрехи
+
+
+def test_opening_an_article_switches_to_its_page() -> None:
+    """Редактор показывает ту полосу, где статья стоит, а не текущую."""
+    app = make_app()
+    app.set_project(sample_project())
+    article = app.project.articles[1]
+    target_page = app.project.page_of_article(article.id)
+    app.project.assign(article.id, app.project.free_block_on(2).id)
+    target_page = app.project.page_of_article(article.id)
+    app.current_page = 0
+
+    app.edit_article(article.id)
+
+    assert app.current_page == target_page
+    assert app.route == "article"
+
+
+def test_continuation_target_follows_the_article() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    first, second = app.project.articles[0], app.project.articles[1]
+    app.project.place_continuation(first.id, 1, 900)
+
+    app.edit_article(first.id)
+    assert app.continuation_target == first.continued_on
+
+    app.edit_article(second.id)
+    assert app.continuation_target == 0  # чужая полоса не подставляется
+
+
+def test_status_message_does_not_stick() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    app.busy_note = "Остаток перенесён на полосу 3"
+
+    app.select_block(next(app.page_model.blocks()).id)
+
+    assert app.busy_note == ""
+
+
+def test_stale_split_is_detected() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    lead = app.project.articles[0]
+    app.project.place_continuation(lead.id, 1, 900)
+
+    assert lead.split_is_stale is False
+
+    lead.body = "Новое начало. " + lead.body
+    assert lead.split_is_stale is True
+
+    app.project.place_continuation(lead.id, 1, 950)
+    assert lead.split_is_stale is False
+
+
+def test_continuation_page_number_follows_reordered_pages() -> None:
+    """«Продолжение на стр. N» должно указывать на ту полосу, где лежит остаток."""
+    app = make_app()
+    app.set_project(sample_project())
+    lead = app.project.articles[0]
+    app.project.place_continuation(lead.id, 2, 900)
+    assert lead.continued_on == 3
+
+    app.move_page(2, -1)
+
+    assert app.project.page_of_article(lead.id, part=1) == 1
+    assert lead.continued_on == 2
+
+
+def test_continuation_page_number_survives_an_inserted_page() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    lead = app.project.articles[0]
+    app.project.place_continuation(lead.id, 2, 900)
+
+    app.duplicate_page(0)  # полоса вставлена перед остатком — номер сдвигается
+
+    assert lead.continued_on == 4

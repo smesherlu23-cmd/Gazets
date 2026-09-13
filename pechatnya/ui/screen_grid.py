@@ -28,6 +28,7 @@ def build(app: AppState) -> ft.Control:
                 app.rebuild()
             else:
                 apply_template(app.page_model, template_id)
+                app.project.repair_continuations()
                 app.selected_block_id = None
                 app.touch(rebuild=True, immediate=True)
 
@@ -49,6 +50,40 @@ def build(app: AppState) -> ft.Control:
                 ),
                 active=template.id == current,
                 on_click=choose(template.id),
+            )
+        )
+
+    for saved in storage.user_templates():
+        if page_kind == "inner" and saved.kind == "front":
+            continue
+        cards.append(
+            c.card(
+                ft.Column(
+                    [
+                        thumbs.frame_thumb(saved.root, masthead=saved.kind != "inner"),
+                        ft.Row(
+                            [
+                                t.text(saved.name, size=13, color=t.TEXT_PRIMARY, weight="500",
+                                       expand=True, max_lines=1,
+                                       overflow=ft.TextOverflow.ELLIPSIS),
+                                ft.Container(
+                                    ft.Icon(ft.Icons.CLOSE, size=12, color=t.TEXT_FAINT),
+                                    on_click=(lambda key: lambda _e: _drop_template(app, key))(
+                                        saved.id
+                                    ),
+                                    padding=4,
+                                    ink=True,
+                                    tooltip="Удалить свой шаблон",
+                                ),
+                            ],
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+                        ),
+                        t.hint(f"своя сетка · блоков: {saved.blocks}", size=11, color=t.TEXT_MUTED),
+                    ],
+                    spacing=8,
+                ),
+                active=current == f"user:{saved.id}",
+                on_click=(lambda key: lambda _e: _use_template(app, key, in_wizard))(saved.id),
             )
         )
 
@@ -233,11 +268,27 @@ def build(app: AppState) -> ft.Control:
                             ],
                             spacing=4,
                         ),
-                        c.chip_row(
-                            KINDS,
-                            page_kind,
-                            lambda key: _set_page_kind(app, key),
-                            height=30,
+                        ft.Row(
+                            [
+                                c.chip_row(
+                                    KINDS,
+                                    page_kind,
+                                    lambda key: _set_page_kind(app, key),
+                                    height=30,
+                                ),
+                                *(
+                                    []
+                                    if in_wizard
+                                    else [
+                                        c.secondary_button(
+                                            "Сохранить эту сетку",
+                                            lambda _e: app.save_page_as_template(),
+                                            height=30,
+                                        )
+                                    ]
+                                ),
+                            ],
+                            spacing=10,
                         ),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -275,3 +326,17 @@ def _add_page(app: AppState) -> None:
     app.project.pages.append(build_page("quadrants", "inner"))
     app.project.issue.pages_count = len(app.project.pages)
     app.touch(rebuild=True)
+
+
+def _use_template(app: AppState, template_id: str, in_wizard: bool) -> None:
+    """Применяет свою сетку: в мастере — к будущей полосе, иначе — к текущей."""
+    if in_wizard:
+        app.wizard.template_id = f"user:{template_id}"
+        app.rebuild()
+        return
+    app.apply_user_template(template_id)
+
+
+def _drop_template(app: AppState, template_id: str) -> None:
+    storage.delete_user_template(template_id)
+    app.rebuild()
