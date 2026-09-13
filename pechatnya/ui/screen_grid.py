@@ -5,25 +5,12 @@ from __future__ import annotations
 import flet as ft
 
 from .. import storage
+from ..models import PAGE_FORMATS
 from ..presets import GRID_TEMPLATES, apply_template, new_project
 from . import common as c
 from . import theme as t
 from . import thumbs
 from .state import AppState
-
-# Схемы миниатюр: (подпись, строка, вес)
-TEMPLATE_THUMBS = {
-    "front-main-side": [("ШАПКА", 0, 1), ("ГЛАВНАЯ", 1, 2), ("БОК", 1, 1),
-                        ("ПОДВАЛ", 2, 1), ("ПОДВАЛ", 2, 1)],
-    "front-three-columns": [("ШАПКА", 0, 1), ("КОЛОНКА", 1, 1), ("КОЛОНКА", 1, 1),
-                            ("КОЛОНКА", 1, 1)],
-    "photo-lead": [("ШАПКА", 0, 1), ("ФОТО", 1, 1), ("ТЕКСТ", 2, 2), ("ВРЕЗКА", 2, 1)],
-    "vertical-masthead": [("ЛОГО", 1, 1), ("ГЛАВНАЯ", 1, 2), ("ВРЕЗКИ", 1, 1),
-                          ("ПОДВАЛ", 2, 2), ("ПОДВАЛ", 2, 1)],
-    "quadrants": [("ШАПКА", 0, 1), ("КВАДРАНТ", 1, 1), ("КВАДРАНТ", 1, 1),
-                  ("КВАДРАНТ", 2, 1), ("КВАДРАНТ", 2, 1)],
-    "blank": [("ПУСТО", 1, 1)],
-}
 
 KINDS = [("front", "Передняя полоса"), ("inner", "Внутренняя")]
 
@@ -54,7 +41,7 @@ def build(app: AppState) -> ft.Control:
             c.card(
                 ft.Column(
                     [
-                        thumbs.grid_thumb(TEMPLATE_THUMBS[template.id]),
+                        thumbs.frame_thumb(template.build(), masthead=template.kind != "inner"),
                         t.text(template.name, size=13, color=t.TEXT_PRIMARY, weight="500"),
                         t.hint(template.description, size=11, color=t.TEXT_MUTED),
                     ],
@@ -72,9 +59,22 @@ def build(app: AppState) -> ft.Control:
 
     # ---------------------------------------------------------------- правая панель
     def set_format(value: str) -> None:
-        project.page_format = value.split(",")[0].strip()
-        project.orientation = "portrait" if "портрет" in value else "landscape"
-        app.touch()
+        project.page_format = value
+        app.touch(rebuild=True, immediate=True)
+
+    def set_orientation(value: str) -> None:
+        project.orientation = value
+        app.touch(rebuild=True, immediate=True)
+
+    def set_custom(index: int):
+        def handler(value: str) -> None:
+            try:
+                project.custom_size_mm[index] = float(value.replace(",", "."))
+            except (ValueError, IndexError):
+                return
+            app.touch(immediate=True)
+
+        return handler
 
     def margin_field(index: int, label: str) -> ft.Control:
         def handler(value: str) -> None:
@@ -131,14 +131,41 @@ def build(app: AppState) -> ft.Control:
         content=ft.Column(
             [
                 c.panel_section(
-                    "Формат",
-                    c.select(
-                        "",
-                        f"{project.page_format}, портрет",
-                        [f"{name}, портрет" for name in ("A3", "A4")],
-                        set_format,
+                    "Формат листа",
+                    c.select("", project.page_format, list(PAGE_FORMATS) + ["Свой размер"],
+                             set_format),
+                    c.segment(
+                        [("portrait", "Портрет"), ("landscape", "Альбом")],
+                        project.orientation,
+                        set_orientation,
                     ),
-                    spacing=8,
+                    *(
+                        [
+                            ft.Row(
+                                [
+                                    ft.Container(
+                                        c.field("Ширина, мм", f"{project.custom_size_mm[0]:g}",
+                                                set_custom(0), height=30),
+                                        expand=True,
+                                    ),
+                                    ft.Container(
+                                        c.field("Высота, мм", f"{project.custom_size_mm[1]:g}",
+                                                set_custom(1), height=30),
+                                        expand=True,
+                                    ),
+                                ],
+                                spacing=8,
+                            )
+                        ]
+                        if project.page_format not in PAGE_FORMATS
+                        else []
+                    ),
+                    t.hint(
+                        f"{project.sheet_mm()[0]:.0f} × {project.sheet_mm()[1]:.0f} мм · "
+                        f"{project.sheet_px()[0]} × {project.sheet_px()[1]} px при 96 dpi",
+                        size=11,
+                    ),
+                    spacing=10,
                 ),
                 c.panel_section(
                     "Поля, мм",

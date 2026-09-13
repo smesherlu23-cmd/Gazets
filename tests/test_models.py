@@ -119,3 +119,141 @@ def test_preset_replaces_style_and_typography() -> None:
     assert project.style.invert_rubrics is True
     # тексты и вёрстка не тронуты
     assert len(project.articles) == 4
+
+
+# ------------------------------------------------------------------- сетка
+
+
+def test_block_splits_and_neighbours_take_the_space() -> None:
+    """Основа конструктора: любой блок делится в любую сторону."""
+    project = new_project()
+    page = project.pages[0]
+    first = next(page.blocks())
+    before = len(list(page.blocks()))
+
+    right = page.split_block(first.id, "row")
+    assert right is not None
+    assert len(list(page.blocks())) == before + 1
+
+    below = page.split_block(right.id, "column")
+    assert below is not None
+    labels = [block.label for block in page.blocks()]
+    assert labels.count("Новый блок") == 2
+
+
+def test_removing_a_block_collapses_the_tree() -> None:
+    project = new_project()
+    page = project.pages[0]
+    first = next(page.blocks())
+    fresh = page.split_block(first.id, "row")
+    depth_before = sum(1 for _ in page.frames())
+
+    assert page.remove_block(fresh.id) is True
+
+    assert [block.id for block in page.blocks()].count(first.id) == 1
+    # контейнер с одним ребёнком не остаётся в дереве
+    assert sum(1 for _ in page.frames()) < depth_before
+
+
+def test_last_block_cannot_be_removed() -> None:
+    project = new_project()
+    page = project.pages[0]
+    while len(list(page.blocks())) > 1:
+        page.remove_block(list(page.blocks())[-1].id)
+
+    assert page.remove_block(next(page.blocks()).id) is False
+    assert len(list(page.blocks())) == 1
+
+
+def test_blocks_can_be_reordered() -> None:
+    project = new_project()
+    page = project.pages[0]
+    labels = [block.label for block in page.blocks()]
+    first = next(page.blocks())
+
+    assert page.move_block(first.id, 1) is True
+
+    assert [block.label for block in page.blocks()] != labels
+
+
+def test_adding_a_block_extends_the_page() -> None:
+    project = new_project()
+    page = project.pages[0]
+    before = len(list(page.blocks()))
+
+    page.add_block("column")
+    page.add_block("row")
+
+    assert len(list(page.blocks())) == before + 2
+
+
+# -------------------------------------------------------------------- лист
+
+
+def test_sheet_size_follows_format_and_orientation() -> None:
+    project = new_project()
+
+    project.page_format = "A4"
+    assert project.sheet_px() == (794, 1123)
+
+    project.page_format = "A3"
+    assert project.sheet_px() == (1123, 1587)
+
+    project.orientation = "landscape"
+    assert project.sheet_px() == (1587, 1123)
+
+    project.page_format = "Свой размер"
+    project.custom_size_mm = [250.0, 350.0]
+    project.orientation = "portrait"
+    assert project.sheet_px() == (945, 1323)
+
+
+def test_margins_are_real_millimetres() -> None:
+    project = new_project()
+    project.margins_mm = [20.0, 10.0, 15.0, 5.0]
+
+    top, bottom, left, right = project.margins_px()
+
+    assert round(top) == 76 and round(bottom) == 38
+    assert round(left) == 57 and round(right) == 19
+
+
+# ------------------------------------------------------ файлы прошлых версий
+
+
+def test_old_project_with_flat_rows_is_migrated() -> None:
+    """Файл прошлой версии (строки полосы) открывается как дерево."""
+    old = {
+        "format_version": 1,
+        "issue": {"title": "Старый выпуск", "number": "7"},
+        "articles": [{"id": "art-1", "title": "Материал", "body": "Текст"}],
+        "pages": [
+            {
+                "id": "pg-1",
+                "kind": "front",
+                "show_masthead": True,
+                "rows": [
+                    {
+                        "weight": 1.0,
+                        "gap": 16.0,
+                        "blocks": [
+                            {"id": "blk-1", "label": "Главная", "weight": 2.0,
+                             "columns": 3, "article_id": "art-1", "kind": "article"},
+                            {"id": "blk-2", "label": "Бок", "fixed_width": 196.0, "columns": 1},
+                        ],
+                    },
+                    {"fixed_height": 120.0, "blocks": [{"id": "blk-3", "label": "Подвал"}]},
+                ],
+            }
+        ],
+    }
+
+    project = Project.from_json_dict(old)
+
+    page = project.pages[0]
+    assert [block.label for block in page.blocks()] == ["Главная", "Бок", "Подвал"]
+    assert page.root.direction == "column"
+    side = page.root.leaf_of_block("blk-2")
+    assert side is not None and side.fixed == 196.0
+    assert page.root.children[1].fixed == 120.0
+    assert project.article("art-1") is not None

@@ -278,9 +278,81 @@ def _block_panel(app: AppState) -> ft.Control:
             )
         ]
 
+    grid_section = c.panel_section(
+        "Сетка",
+        ft.Row(
+            [
+                _grid_button(app, "Разделить вертикально", "columns",
+                             lambda: app.split_block(block.id, "row")),
+                _grid_button(app, "Разделить горизонтально", "rows",
+                             lambda: app.split_block(block.id, "column")),
+            ],
+            spacing=8,
+        ),
+        ft.Row(
+            [
+                c.chip("Сдвинуть назад", False, lambda _e: app.move_block(block.id, -1),
+                       height=28),
+                c.chip("Сдвинуть вперёд", False, lambda _e: app.move_block(block.id, 1),
+                       height=28),
+                c.chip("Удалить блок", False, lambda _e: app.remove_block(block.id), height=28),
+            ],
+            spacing=8,
+            wrap=True,
+            run_spacing=8,
+        ),
+        t.hint(
+            "Блок делится пополам, соседи занимают освободившееся место. "
+            "Границы тянутся мышью прямо на полосе.",
+            size=11,
+        ),
+        spacing=10,
+    )
+
+    style_section = c.panel_section(
+        "Оформление блока",
+        c.segment(
+            [("none", "Без рамки"), ("hairline", "Тонкая"), ("double", "Двойная"),
+             ("bold", "Жирная")],
+            block.frame,
+            lambda value: set_value("frame", value),
+        ),
+        c.toggle("Плашка-подложка", block.tint, lambda value: set_value("tint", value)),
+        c.stepper(
+            "Отступ внутри, px",
+            block.padding,
+            lambda value: set_value("padding", value),
+            step=2,
+            minimum=0,
+            maximum=40,
+            width=104,
+        ),
+        c.stepper(
+            "Кегль текста",
+            block.body_scale,
+            lambda value: set_value("body_scale", value),
+            step=0.05,
+            minimum=0.6,
+            maximum=1.8,
+            decimals=2,
+            width=104,
+        ),
+        c.stepper(
+            "Средник, px",
+            block.column_gap,
+            lambda value: set_value("column_gap", value),
+            step=1,
+            minimum=4,
+            maximum=40,
+            width=104,
+        ),
+        spacing=10,
+    )
+
     return ft.Column(
         [
             selection_card,
+            grid_section,
             c.panel_section(
                 "Набор",
                 c.stepper(
@@ -322,6 +394,7 @@ def _block_panel(app: AppState) -> ft.Control:
             ),
             *image_section,
             *modules_section,
+            style_section,
             *(_continuation_section(app, article, block) if article else []),
             *(
                 [
@@ -340,6 +413,38 @@ def _block_panel(app: AppState) -> ft.Control:
             ),
         ],
         spacing=22,
+    )
+
+
+def _grid_button(app: AppState, label: str, glyph: str, action) -> ft.Control:
+    """Кнопка деления блока с маленькой схемой того, что получится."""
+    if glyph == "columns":
+        icon = ft.Row(
+            [
+                ft.Container(width=8, height=18, bgcolor=t.BORDER_STRONG),
+                ft.Container(width=8, height=18, bgcolor=t.ACCENT),
+            ],
+            spacing=2,
+        )
+    else:
+        icon = ft.Column(
+            [
+                ft.Container(width=18, height=8, bgcolor=t.BORDER_STRONG),
+                ft.Container(width=18, height=8, bgcolor=t.ACCENT),
+            ],
+            spacing=2,
+        )
+    return ft.Container(
+        content=ft.Row([icon], tight=True, alignment=ft.MainAxisAlignment.CENTER),
+        width=64,
+        height=40,
+        alignment=ft.Alignment.CENTER,
+        bgcolor=t.BG_CONTROL,
+        border=ft.Border.all(1, t.BORDER_BASE),
+        border_radius=t.RADIUS_CONTROL,
+        on_click=lambda _e: action(),
+        ink=True,
+        tooltip=label,
     )
 
 

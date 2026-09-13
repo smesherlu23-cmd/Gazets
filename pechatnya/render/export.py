@@ -35,13 +35,14 @@ def slugify(text: str) -> str:
     return slug or "vypusk"
 
 
-def px_for_dpi(dpi: int) -> tuple[int, int]:
+def px_for_dpi(dpi: int, sheet: tuple[int, int] | None = None) -> tuple[int, int]:
     scale = dpi / 96
-    return int(round(SHEET_WIDTH * scale)), int(round(SHEET_HEIGHT * scale))
+    width, height = sheet or (SHEET_WIDTH, SHEET_HEIGHT)
+    return int(round(width * scale)), int(round(height * scale))
 
 
-def dpi_label(dpi: int) -> str:
-    width, height = px_for_dpi(dpi)
+def dpi_label(dpi: int, sheet: tuple[int, int] | None = None) -> str:
+    width, height = px_for_dpi(dpi, sheet)
     return f"{dpi} dpi · {width} × {height} px"
 
 
@@ -98,7 +99,7 @@ def planned_names(project: Project, settings: ExportSettings) -> list[str]:
 def estimate_size(project: Project, settings: ExportSettings) -> str:
     """Грубая оценка объёма для сводки в диалоге (до самого рендера)."""
     pages = len(settings.pages(len(project.pages)))
-    width, height = px_for_dpi(settings.dpi)
+    width, height = px_for_dpi(settings.dpi, project.sheet_px())
     per_page = width * height * 0.35 / 1024 / 1024  # PNG газетной полосы жмётся примерно так
     if settings.fmt == "pdf":
         per_page *= 0.45
@@ -129,7 +130,7 @@ def export(
     if settings.fmt == "pdf":
         target = settings.directory / planned_names(project, settings)[0]
         document = issue_document(project, options, project_dir, pages)
-        render_engine.render_pdf(document, target, project.page_format)
+        render_engine.render_pdf(document, target, project.sheet_mm())
         result.files.append(target)
         result.total_bytes = target.stat().st_size
         if progress:
@@ -141,7 +142,7 @@ def export(
     for order, index in enumerate(pages, start=1):
         target = settings.directory / f"{file_stem(project, index)}.png"
         document = page_document(project, index, options, project_dir)
-        render_engine.render_png(document, target, scale)
+        render_engine.render_png(document, target, scale, size=project.sheet_px())
         rendered.append(target)
         if progress:
             progress(order, len(pages), target.name)

@@ -1,103 +1,100 @@
-"""Геометрия вёрстки: растягивание границ блоков и строк.
-
-Границы тянутся мышью поверх картинки превью, поэтому проверяем сам пересчёт
-весов: он должен перераспределять место, а не ломать полосу.
-"""
+"""Геометрия вёрстки: дерево блоков, растягивание границ, зоны поверх превью."""
 
 from __future__ import annotations
 
-from pechatnya.models import BlockFit
 from pechatnya.ui.screen_layout import LayoutScreen
 from tests.fixtures import sample_project
-from tests.ui_harness import make_app
+from tests.ui_harness import fill_metrics, make_app
 
 
-def _screen_with_metrics() -> tuple[LayoutScreen, object]:
+def _screen() -> tuple[LayoutScreen, object]:
     app = make_app(route="layout")
     app.set_project(sample_project())
-    blocks = list(app.page_model.blocks())
-    app.fits = {
-        blocks[0].id: BlockFit(blocks[0].id, percent=80, x=38, y=207, width=506, height=716),
-        blocks[1].id: BlockFit(blocks[1].id, percent=78, x=560, y=207, width=196, height=716),
-        blocks[2].id: BlockFit(blocks[2].id, percent=92, x=38, y=933, width=231, height=132),
-        blocks[3].id: BlockFit(blocks[3].id, percent=92, x=282, y=933, width=231, height=132),
-        blocks[4].id: BlockFit(blocks[4].id, percent=68, x=525, y=933, width=231, height=132),
-    }
+    fill_metrics(app)
     return LayoutScreen(app), app
 
 
-def test_dragging_a_fixed_border_changes_width_in_pixels() -> None:
-    screen, app = _screen_with_metrics()
-    row = app.page_model.rows[0]
-    sidebar = row.blocks[1]
-    before = sidebar.fixed_width
-
-    screen._resize_columns(row, 0, -60)  # тянем границу влево
-
-    assert sidebar.fixed_width == before + 60
-    assert sidebar.fixed_width > 60
-
-
-def test_flexible_blocks_share_the_row() -> None:
-    screen, app = _screen_with_metrics()
-    row = app.page_model.rows[1]
-    left, middle = row.blocks[0], row.blocks[1]
-    total_before = left.weight + middle.weight
-
-    screen._resize_columns(row, 0, 80)
-
-    assert left.weight > middle.weight
-    assert round(left.weight + middle.weight, 4) == round(total_before, 4)
-
-
-def test_block_cannot_be_squeezed_to_nothing() -> None:
-    screen, app = _screen_with_metrics()
-    row = app.page_model.rows[1]
-    left, middle = row.blocks[0], row.blocks[1]
-
-    for _ in range(10):
-        screen._resize_columns(row, 0, -500)
-
-    assert left.weight > 0
-    assert middle.weight > 0
-    assert left.weight / (left.weight + middle.weight) >= 0.12
-
-
-def test_row_border_moves_between_rows() -> None:
-    screen, app = _screen_with_metrics()
-    page = app.page_model
-    bottom = page.rows[1]
-    before = bottom.fixed_height
-
-    screen._resize_rows(page, 0, 40)  # тянем границу вниз
-
-    assert bottom.fixed_height == before - 40
-
-
-def test_row_keeps_a_minimum_height() -> None:
-    screen, app = _screen_with_metrics()
-    page = app.page_model
-    bottom = page.rows[1]
-
-    for _ in range(10):
-        screen._resize_rows(page, 0, 400)
-
-    assert bottom.fixed_height >= 50
-
-
-def test_overlay_has_zone_for_every_block_and_handles() -> None:
-    screen, app = _screen_with_metrics()
+def test_overlay_covers_blocks_and_borders() -> None:
+    screen, app = _screen()
+    blocks = list(app.page_model.blocks())
 
     controls = screen._overlay_controls()
 
-    # пять блоков + три вертикальные границы + одна горизонтальная
-    assert len(controls) == 5 + 3 + 1
+    # зона на каждый блок плюс ручка на каждый стык соседей
+    joints = sum(
+        max(0, len(frame.children) - 1) for frame in app.page_model.frames() if not frame.is_leaf
+    )
+    assert len(controls) == len(blocks) + joints
+    assert joints >= 3
 
 
 def test_overlay_scales_with_zoom() -> None:
-    screen, app = _screen_with_metrics()
+    screen, app = _screen()
     app.zoom = 0.5
     first = screen._overlay_controls()[0]
+    rect = app.fit_of(next(app.page_model.blocks()).id)
 
-    assert first.left == 38 * 0.5
-    assert first.top == 207 * 0.5
+    assert first.left == rect.x * 0.5
+    assert first.top == rect.y * 0.5
+
+
+def test_dragging_a_border_moves_space_between_neighbours() -> None:
+    screen, app = _screen()
+    container = next(
+        frame for frame in app.page_model.frames()
+        if not frame.is_leaf and frame.direction == "row" and len(frame.children) > 1
+    )
+    left, right = container.children[0], container.children[1]
+    total_before = left.weight + right.weight
+
+    screen._resize_siblings(container, 0, 80)
+
+    if right.fixed is not None:  # узкая колонка задана в пикселях
+        assert right.fixed < 196.0
+    else:
+        assert left.weight > right.weight
+        assert round(left.weight + right.weight, 4) == round(total_before, 4)
+
+
+def test_fixed_column_keeps_a_minimum_width() -> None:
+    screen, app = _screen()
+    container = next(
+        frame for frame in app.page_model.frames()
+        if not frame.is_leaf and any(child.fixed for child in frame.children)
+    )
+    index = next(i for i, child in enumerate(container.children) if child.fixed is None)
+
+    for _ in range(12):
+        screen._resize_siblings(container, index, 400)
+
+    assert all(child.fixed is None or child.fixed >= 40 for child in container.children)
+
+
+def test_flexible_blocks_never_collapse() -> None:
+    screen, app = _screen()
+    container = next(
+        frame for frame in app.page_model.frames()
+        if not frame.is_leaf and sum(1 for child in frame.children if child.fixed is None) >= 2
+    )
+    flexible = [child for child in container.children if child.fixed is None]
+    index = container.children.index(flexible[0])
+
+    for _ in range(12):
+        screen._resize_siblings(container, index, -500)
+
+    assert all(child.weight > 0 for child in container.children)
+
+
+def test_split_and_remove_rebuild_the_overlay() -> None:
+    screen, app = _screen()
+    block = next(app.page_model.blocks())
+    before = len(list(app.page_model.blocks()))
+
+    fresh = app.page_model.split_block(block.id, "column")
+    fill_metrics(app)
+    assert len(list(app.page_model.blocks())) == before + 1
+    assert len(screen._overlay_controls()) > before
+
+    app.page_model.remove_block(fresh.id)
+    fill_metrics(app)
+    assert len(list(app.page_model.blocks())) == before

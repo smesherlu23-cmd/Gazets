@@ -102,40 +102,54 @@ def paper_thumb(
     )
 
 
-def grid_thumb(blocks: list[tuple[str, int, int]], height: int = 168) -> ft.Control:
-    """Схема шаблона сетки: подписанные прямоугольники.
+def frame_thumb(root, height: int = 168, masthead: bool = True) -> ft.Control:
+    """Схема сетки по дереву блоков — годится и для шаблона, и для текущей полосы."""
 
-    ``blocks`` — список ``(подпись, номер строки, вес)``; строки собираются
-    по порядку, вес задаёт долю ширины.
-    """
-    rows: dict[int, list[tuple[str, int]]] = {}
-    for label, row, weight in blocks:
-        rows.setdefault(row, []).append((label, weight))
-    controls = []
-    for row_index in sorted(rows):
-        cells = []
-        for label, weight in rows[row_index]:
-            cells.append(
-                ft.Container(
-                    content=ft.Text(
-                        label,
-                        size=8,
-                        color="#6b6354",
-                        font_family=t.MONO,
-                        text_align=ft.TextAlign.CENTER,
-                    ),
-                    bgcolor="#ddd6c6" if row_index == 0 else "#e6e0d1",
-                    alignment=ft.Alignment.CENTER,
-                    expand=weight,
-                    padding=2,
-                )
+    def cell(frame) -> ft.Control:
+        expand = max(1, int(round(frame.weight * 10))) if frame.fixed is None else None
+        width = None
+        if frame.fixed is not None:
+            width = max(10, min(60, frame.fixed / 6))
+        if frame.is_leaf:
+            label = frame.block.label if frame.block else ""
+            return ft.Container(
+                content=ft.Text(
+                    label.upper(),
+                    size=7,
+                    color="#6b6354",
+                    font_family=t.MONO,
+                    text_align=ft.TextAlign.CENTER,
+                    max_lines=1,
+                    no_wrap=True,
+                    overflow=ft.TextOverflow.ELLIPSIS,
+                ),
+                bgcolor="#e6e0d1",
+                alignment=ft.Alignment.CENTER,
+                padding=2,
+                expand=expand,
+                width=width,
             )
-        controls.append(ft.Row(cells, spacing=4, expand=row_index != 0, height=14 if row_index == 0 else None))
+        children = [cell(child) for child in frame.children]
+        if frame.direction == "row":
+            return ft.Row(children, spacing=3, expand=expand, width=width)
+        return ft.Column(children, spacing=3, expand=expand, width=width)
+
+    parts: list[ft.Control] = []
+    if masthead:
+        parts.append(
+            ft.Container(
+                content=ft.Text("ШАПКА", size=7, color="#6b6354", font_family=t.MONO),
+                bgcolor="#ddd6c6",
+                height=13,
+                alignment=ft.Alignment.CENTER,
+            )
+        )
+    parts.append(ft.Container(content=cell(root), expand=True))
     return ft.Container(
-        content=ft.Column(controls, spacing=4, expand=True),
+        content=ft.Column(parts, spacing=4, expand=True),
         height=height,
         bgcolor=PAPER,
-        padding=8,
+        padding=7,
         border_radius=4,
     )
 

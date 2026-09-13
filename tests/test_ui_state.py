@@ -94,7 +94,7 @@ def test_undo_drops_stale_selection() -> None:
     app = make_app()
     app.set_project(sample_project())
     page = app.page_model
-    page.rows[0].blocks.pop()  # убрали блок целиком
+    page.remove_block(list(page.blocks())[-1].id)  # убрали блок целиком
     app.touch()
     app.selected_block_id = "blk-которого-нет"
 

@@ -34,12 +34,15 @@ def test_measure_reports_fit_per_block(render_engine) -> None:
     project = sample_project()
     document = page_document(project, 0, RenderOptions())
 
-    metrics = {item.id: item for item in render_engine.measure(document)}
-
-    if not metrics:
+    measured = render_engine.measure(document)
+    if not measured:
         pytest.skip("движок работает в режиме CLI — замер недоступен")
+    metrics = {item.id: item for item in measured if item.kind == "block"}
+    frames = [item for item in measured if item.kind == "frame"]
+
     assert len(metrics) == len(list(project.pages[0].blocks()))
-    lead = project.pages[0].rows[0].blocks[0]
+    assert frames, "замер отдаёт и узлы сетки — по ним ставятся ручки границ"
+    lead = next(project.pages[0].blocks())
     assert 0 < metrics[lead.id].percent < 100
     assert metrics[lead.id].overflow == 0
 
@@ -53,7 +56,7 @@ def test_overflow_is_detected(render_engine) -> None:
     if not metrics:
         pytest.skip("движок работает в режиме CLI — замер недоступен")
 
-    lead = project.pages[0].rows[0].blocks[0]
+    lead = next(project.pages[0].blocks())
     assert metrics[lead.id].percent > 100
     assert metrics[lead.id].overflow > 0
 
@@ -108,6 +111,7 @@ def test_no_split_needed_for_short_article(render_engine) -> None:
 
     project = sample_project()
     short = project.articles[1]
+    short.body = "Короткая заметка в две строки."
     if not render_engine.can_measure:
         pytest.skip("движок работает в режиме CLI — замер недоступен")
 

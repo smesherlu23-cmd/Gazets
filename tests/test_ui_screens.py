@@ -21,7 +21,7 @@ from pechatnya.ui import (
     screen_start,
 )
 from tests.fixtures import sample_project
-from tests.ui_harness import check_controls, make_app
+from tests.ui_harness import check_controls, fill_metrics, make_app
 
 SIMPLE_SCREENS = {
     "start": screen_start.build,
@@ -42,24 +42,20 @@ def test_screen_builds_and_validates(route: str) -> None:
 
 
 def test_layout_screen_with_selection_and_overflow() -> None:
-    from pechatnya.models import BlockFit
-
     app = make_app(route="layout")
     app.set_project(sample_project())
+    fill_metrics(app)
     blocks = list(app.page_model.blocks())
-    app.fits = {
-        blocks[0].id: BlockFit(blocks[0].id, percent=142.0, overflow_chars=640,
-                               x=38, y=207, width=506, height=716),
-        blocks[1].id: BlockFit(blocks[1].id, percent=78.0, x=560, y=207, width=196, height=716),
-    }
+    app.fits[blocks[0].id].percent = 142.0
+    app.fits[blocks[0].id].overflow_chars = 640
     app.selected_block_id = blocks[0].id
 
     screen = screen_layout.LayoutScreen(app)
     control = screen.build()
 
     assert check_controls(control) > 20
-    # зоны блоков, ручки границ и бейдж выделения кладутся поверх картинки
-    assert len(screen.overlay.controls) >= 3
+    # зоны блоков и ручки границ кладутся поверх картинки
+    assert len(screen.overlay.controls) > len(blocks)
 
 
 def test_panels_cover_every_tab() -> None:

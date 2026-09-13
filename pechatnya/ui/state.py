@@ -68,6 +68,7 @@ class AppState:
         self._snapshot_at = 0.0
         self.drag_payload: Optional[str] = None
         self.fits: dict[str, BlockFit] = {}
+        self.frame_rects: dict[str, BlockFit] = {}
         self.preview_image: Optional[pathlib.Path] = None
         self.preview_b64: Optional[str] = None
         self.preview_error: Optional[str] = None
@@ -131,6 +132,25 @@ class AppState:
     def project_dir(self) -> Optional[pathlib.Path]:
         return self.project_path.parent if self.project_path else None
 
+    def frame_rect(self, frame_id: str) -> Optional[BlockFit]:
+        return self.frame_rects.get(frame_id)
+
+    def sheet_size(self) -> tuple[int, int]:
+        return self.project.sheet_px()
+
+    def fit_zoom(self) -> float:
+        """Масштаб «вписать в окно» — считается от свободного места на канвасе."""
+        sheet_w, sheet_h = self.sheet_size()
+        window_w = getattr(self.page, "width", None) or 1440
+        window_h = getattr(self.page, "height", None) or 900
+        canvas_w = max(200.0, window_w - 256 - 312 - 40)
+        canvas_h = max(200.0, window_h - 36 - 34 - 28 - 40)
+        return round(max(0.1, min(2.0, min(canvas_w / sheet_w, canvas_h / sheet_h))), 2)
+
+    def zoom_to_fit(self) -> None:
+        self.zoom = self.fit_zoom()
+        self.rebuild()
+
     def refresh_preview(self, immediate: bool = False) -> None:
         if self.preview is None:
             return
@@ -150,7 +170,7 @@ class AppState:
             self.preview_b64 = result.image_b64
         self.preview_error = result.error
         self.last_render_ms = result.elapsed_ms
-        self.fits = {
+        measured = {
             item.id: BlockFit(
                 block_id=item.id,
                 percent=item.percent,
@@ -161,6 +181,12 @@ class AppState:
                 height=item.height,
             )
             for item in result.metrics
+        }
+        self.fits = {
+            item.id: measured[item.id] for item in result.metrics if item.kind == "block"
+        }
+        self.frame_rects = {
+            item.id: measured[item.id] for item in result.metrics if item.kind == "frame"
         }
         for listener in list(self._preview_listeners):
             try:
@@ -296,6 +322,88 @@ class AppState:
         self.current_page = 0
         self.selected_block_id = None
         self.fits = {}
+
+    # ---------------------------------------------------- правка сетки
+    def split_block(self, block_id: str, direction: str) -> None:
+        """Делит блок: «row» — рядом, «column» — снизу."""
+        fresh = self.page_model.split_block(block_id, direction)
+        if fresh is not None:
+            self.selected_block_id = fresh.id
+            self.touch(rebuild=True, immediate=True)
+
+    def remove_block(self, block_id: str) -> None:
+        if self.page_model.remove_block(block_id):
+            if self.selected_block_id == block_id:
+                self.selected_block_id = None
+            self.touch(rebuild=True, immediate=True)
+        else:
+            self.busy_note = "Последний блок полосы удалить нельзя"
+            self.rebuild()
+
+    def move_block(self, block_id: str, delta: int) -> None:
+        if self.page_model.move_block(block_id, delta):
+            self.touch(rebuild=True, immediate=True)
+
+    def add_block(self, direction: str = "column") -> None:
+        fresh = self.page_model.add_block(direction)
+        self.selected_block_id = fresh.id
+        self.touch(rebuild=True, immediate=True)
+
+    # ------------------------------------------------------------- полосы
+    def add_page(self, template_id: str = "quadrants") -> None:
+        from ..presets import build_page
+
+        self.project.pages.append(build_page(template_id, "inner"))
+        self.project.issue.pages_count = len(self.project.pages)
+        self.current_page = len(self.project.pages) - 1
+        self.selected_block_id = None
+        self.touch(rebuild=True, immediate=True)
+
+    def duplicate_page(self, index: int) -> None:
+        """Копия полосы — вместе с сеткой, но без привязки статей."""
+        from ..models import Page, new_id
+        from ..serde import from_dict, to_dict
+
+        if not 0 <= index < len(self.project.pages):
+            return
+        copy = from_dict(Page, to_dict(self.project.pages[index]))
+        copy.id = new_id("pg")
+        for frame in copy.root.walk():
+            frame.id = new_id("frm")
+            if frame.block is not None:
+                frame.block.id = new_id("blk")
+                frame.block.article_id = None
+                frame.block.article_part = 0
+                if frame.block.kind == "article":
+                    frame.block.kind = "empty"
+        self.project.pages.insert(index + 1, copy)
+        self.project.issue.pages_count = len(self.project.pages)
+        self.current_page = index + 1
+        self.selected_block_id = None
+        self.touch(rebuild=True, immediate=True)
+
+    def remove_page(self, index: int) -> None:
+        if len(self.project.pages) <= 1:
+            self.busy_note = "В выпуске должна остаться хотя бы одна полоса"
+            self.rebuild()
+            return
+        for block in self.project.pages[index].blocks():
+            if block.article_id:
+                self.project.detach(block.article_id)
+        self.project.pages.pop(index)
+        self.project.issue.pages_count = len(self.project.pages)
+        self.current_page = max(0, min(self.current_page, len(self.project.pages) - 1))
+        self.selected_block_id = None
+        self.touch(rebuild=True, immediate=True)
+
+    def move_page(self, index: int, delta: int) -> None:
+        target = index + delta
+        if not (0 <= index < len(self.project.pages) and 0 <= target < len(self.project.pages)):
+            return
+        pages = self.project.pages
+        pages[index], pages[target] = pages[target], pages[index]
+        self.current_page = target
+        self.touch(rebuild=True, immediate=True)
 
     # ------------------------------------------------- продолжение на стр. N
     def split_article(self, article_id: str, page_index: int) -> None:

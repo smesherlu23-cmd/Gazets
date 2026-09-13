@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import flet as ft
 
-from ..models import MARGIN_H, SHEET_HEIGHT, SHEET_WIDTH, Article, Block, Row
+from ..models import Article, Block
 from ..presets import MODULE_TITLES, make_module
 from . import common as c
 from . import panels
@@ -27,15 +27,16 @@ class LayoutScreen:
 
     def __init__(self, app: AppState) -> None:
         self.app = app
+        sheet_w, sheet_h = app.sheet_size()
         self.image = ft.Image(
             src=app.preview_b64,
-            width=SHEET_WIDTH * app.zoom,
-            height=SHEET_HEIGHT * app.zoom,
+            width=sheet_w * app.zoom,
+            height=sheet_h * app.zoom,
             fit=ft.BoxFit.FILL,
             gapless_playback=True,
         )
-        self.overlay = ft.Stack(controls=[], width=SHEET_WIDTH * app.zoom,
-                                height=SHEET_HEIGHT * app.zoom)
+        self.overlay = ft.Stack(controls=[], width=sheet_w * app.zoom,
+                                height=sheet_h * app.zoom)
         self.status = ft.Row([], spacing=16, vertical_alignment=ft.CrossAxisAlignment.CENTER)
         self.placeholder = ft.Container(
             content=ft.Column(
@@ -49,8 +50,8 @@ class LayoutScreen:
             ),
             alignment=ft.Alignment.CENTER,
             visible=app.preview_image is None,
-            width=SHEET_WIDTH * app.zoom,
-            height=SHEET_HEIGHT * app.zoom,
+            width=sheet_w * app.zoom,
+            height=sheet_h * app.zoom,
             bgcolor=t.BG_CANVAS,
         )
         self.left_holder = ft.Container(content=build_left_rail(app))
@@ -76,22 +77,82 @@ class LayoutScreen:
         return value * self.app.zoom
 
     def _overlay_controls(self) -> list[ft.Control]:
+        """Зоны блоков и ручки границ — по дереву сетки, а не по строкам."""
         app = self.app
         controls: list[ft.Control] = []
-        page_model = app.page_model
-        for row_index, row in enumerate(page_model.rows):
-            for block_index, block in enumerate(row.blocks):
-                fit = app.fit_of(block.id)
-                if fit is None:
+        page = app.page_model
+        for frame in page.leaves():
+            block = frame.block
+            fit = app.fit_of(block.id) if block else None
+            if block is None or fit is None:
+                continue
+            controls.append(self._block_zone(block, fit))
+        for container in page.frames():
+            if container.is_leaf:
+                continue
+            for index in range(len(container.children) - 1):
+                before = app.frame_rect(container.children[index].id)
+                after = app.frame_rect(container.children[index + 1].id)
+                if before is None or after is None:
                     continue
-                controls.append(self._block_zone(block, fit))
-                if block_index + 1 < len(row.blocks):
-                    controls.append(self._vertical_handle(row, block_index, fit))
-            if row_index + 1 < len(page_model.rows):
-                last = app.fit_of(row.blocks[-1].id) if row.blocks else None
-                if last is not None:
-                    controls.append(self._horizontal_handle(page_model, row_index, last))
+                controls.append(self._handle(container, index, before, after))
         return controls
+
+    def _handle(self, container, index: int, before, after) -> ft.Control:
+        """Полоска на стыке соседей: тянется мышью, меняет их доли."""
+        horizontal = container.direction == "row"
+
+        def on_update(event: ft.DragUpdateEvent) -> None:
+            delta = event.local_delta.x if horizontal else event.local_delta.y
+            self._resize_siblings(container, index, delta / max(self.app.zoom, 0.05))
+
+        if horizontal:
+            left = self._scaled((before.x + before.width + after.x) / 2) - HANDLE / 2
+            top = self._scaled(min(before.y, after.y))
+            width, height = HANDLE, self._scaled(max(before.height, after.height))
+            cursor = ft.MouseCursor.RESIZE_LEFT_RIGHT
+        else:
+            left = self._scaled(min(before.x, after.x))
+            top = self._scaled((before.y + before.height + after.y) / 2) - HANDLE / 2
+            width, height = self._scaled(max(before.width, after.width)), HANDLE
+            cursor = ft.MouseCursor.RESIZE_UP_DOWN
+
+        return ft.Container(
+            content=ft.GestureDetector(
+                content=ft.Container(width=width, height=height, bgcolor="#00000001"),
+                on_pan_update=on_update,
+                on_pan_end=lambda _e: self.app.touch(immediate=True),
+                mouse_cursor=cursor,
+            ),
+            left=left,
+            top=top,
+        )
+
+    def _resize_siblings(self, container, index: int, delta: float) -> None:
+        """Перераспределяет место между двумя соседями внутри контейнера."""
+        app = self.app
+        before, after = container.children[index], container.children[index + 1]
+        rect_before = app.frame_rect(before.id)
+        rect_after = app.frame_rect(after.id)
+        if rect_before is None or rect_after is None:
+            return
+        horizontal = container.direction == "row"
+        size_before = rect_before.width if horizontal else rect_before.height
+        size_after = rect_after.width if horizontal else rect_after.height
+
+        if before.fixed is not None:
+            before.fixed = max(40.0, before.fixed + delta)
+        elif after.fixed is not None:
+            after.fixed = max(40.0, after.fixed - delta)
+        else:
+            span = size_before + size_after
+            if span <= 0:
+                return
+            total = before.weight + after.weight
+            share = max(0.12, min(0.88, (size_before + delta) / span))
+            before.weight = round(total * share, 4)
+            after.weight = round(total * (1 - share), 4)
+        app.refresh_preview(immediate=True)
 
     def _block_zone(self, block: Block, fit) -> ft.Control:
         app = self.app
@@ -142,78 +203,7 @@ class LayoutScreen:
         )
         return ft.Container(content=target, left=self._scaled(fit.x), top=self._scaled(fit.y))
 
-    def _vertical_handle(self, row: Row, index: int, fit) -> ft.Control:
-        def on_update(event: ft.DragUpdateEvent) -> None:
-            self._resize_columns(row, index, event.local_delta.x / max(self.app.zoom, 0.05))
-
-        return ft.Container(
-            content=ft.GestureDetector(
-                content=ft.Container(width=HANDLE, height=self._scaled(fit.height), bgcolor="#00000001"),
-                on_pan_update=on_update,
-                on_pan_end=lambda _e: self.app.touch(immediate=True),
-                mouse_cursor=ft.MouseCursor.RESIZE_LEFT_RIGHT,
-            ),
-            left=self._scaled(fit.x + fit.width) - HANDLE / 2,
-            top=self._scaled(fit.y),
-        )
-
-    def _horizontal_handle(self, page_model, row_index: int, fit) -> ft.Control:
-        def on_update(event: ft.DragUpdateEvent) -> None:
-            self._resize_rows(page_model, row_index, event.local_delta.y / max(self.app.zoom, 0.05))
-
-        return ft.Container(
-            content=ft.GestureDetector(
-                content=ft.Container(
-                    width=self._scaled(SHEET_WIDTH - MARGIN_H * 2), height=HANDLE, bgcolor="#00000001"
-                ),
-                on_pan_update=on_update,
-                on_pan_end=lambda _e: self.app.touch(immediate=True),
-                mouse_cursor=ft.MouseCursor.RESIZE_UP_DOWN,
-            ),
-            left=self._scaled(MARGIN_H),
-            top=self._scaled(fit.y + fit.height) - HANDLE / 2,
-        )
-
     # ------------------------------------------------------------ манипуляции
-    def _resize_columns(self, row: Row, index: int, delta: float) -> None:
-        """Тянем границу между блоками: ширина одного растёт, соседняго — убывает."""
-        left, right = row.blocks[index], row.blocks[index + 1]
-        left_fit = self.app.fit_of(left.id)
-        right_fit = self.app.fit_of(right.id)
-        if not left_fit or not right_fit:
-            return
-        if left.fixed_width is not None:
-            left.fixed_width = max(60.0, left.fixed_width + delta)
-        elif right.fixed_width is not None:
-            right.fixed_width = max(60.0, right.fixed_width - delta)
-        else:
-            total = left.weight + right.weight
-            span = left_fit.width + right_fit.width
-            if span <= 0:
-                return
-            share = (left_fit.width + delta) / span
-            share = max(0.12, min(0.88, share))
-            left.weight = round(total * share, 4)
-            right.weight = round(total * (1 - share), 4)
-        self.app.refresh_preview(immediate=True)
-
-    def _resize_rows(self, page_model, row_index: int, delta: float) -> None:
-        upper, lower = page_model.rows[row_index], page_model.rows[row_index + 1]
-        upper_fit = self.app.fit_of(upper.blocks[0].id) if upper.blocks else None
-        if upper_fit is None:
-            return
-        if upper.fixed_height is not None:
-            upper.fixed_height = max(50.0, upper.fixed_height + delta)
-        elif lower.fixed_height is not None:
-            lower.fixed_height = max(50.0, lower.fixed_height - delta)
-        else:
-            total = upper.weight + lower.weight
-            height = upper_fit.height
-            share = max(0.12, min(0.88, (height + delta) / max(height, 1) * (upper.weight / total)))
-            upper.weight = round(total * share, 4)
-            lower.weight = round(total * (1 - share), 4)
-        self.app.refresh_preview(immediate=True)
-
     def _accept_article(self, event, block_id: str) -> None:
         article_id = self.app.drag_payload
         if not article_id:
@@ -271,13 +261,14 @@ class LayoutScreen:
     # -------------------------------------------------------------------- сборка
     def build(self) -> ft.Control:
         app = self.app
+        sheet_w, sheet_h = app.sheet_size()
         self.overlay.controls = self._overlay_controls()
-        self.overlay.width = SHEET_WIDTH * app.zoom
-        self.overlay.height = SHEET_HEIGHT * app.zoom
-        self.image.width = SHEET_WIDTH * app.zoom
-        self.image.height = SHEET_HEIGHT * app.zoom
-        self.placeholder.width = SHEET_WIDTH * app.zoom
-        self.placeholder.height = SHEET_HEIGHT * app.zoom
+        self.overlay.width = sheet_w * app.zoom
+        self.overlay.height = sheet_h * app.zoom
+        self.image.width = sheet_w * app.zoom
+        self.image.height = sheet_h * app.zoom
+        self.placeholder.width = sheet_w * app.zoom
+        self.placeholder.height = sheet_h * app.zoom
         self.left_holder.content = build_left_rail(app)
         self.panel_holder.content = panels.build(app)
         self._fill_status()
@@ -338,8 +329,8 @@ class LayoutScreen:
 
     def _corner_marks(self) -> list[ft.Control]:
         size, offset = 6, -3
-        width = SHEET_WIDTH * self.app.zoom
-        height = SHEET_HEIGHT * self.app.zoom
+        width = self.app.sheet_size()[0] * self.app.zoom
+        height = self.app.sheet_size()[1] * self.app.zoom
         positions = [
             {"left": offset, "top": offset},
             {"left": width + offset - size, "top": offset},
@@ -361,12 +352,42 @@ def build_left_rail(app: AppState) -> ft.Control:
             ft.Container(
                 thumbs.page_thumb(index == app.current_page, index + 1),
                 on_click=(lambda index: lambda _e: _go_page(app, index))(index),
+                tooltip=f"Полоса {index + 1}",
             )
             for index in range(len(app.project.pages))
+        ]
+        + [
+            ft.Container(
+                content=ft.Text("+", size=16, color=t.TEXT_SECONDARY),
+                width=44,
+                height=62,
+                alignment=ft.Alignment.CENTER,
+                border=ft.Border.all(1, t.BORDER_STRONG),
+                border_radius=2,
+                on_click=lambda _e: app.add_page(),
+                ink=True,
+                tooltip="Добавить полосу",
+            )
         ],
         spacing=8,
         wrap=True,
         run_spacing=8,
+    )
+    page_tools = ft.Row(
+        [
+            _tool(app, ft.Icons.ARROW_BACK, "Сдвинуть полосу влево",
+                  lambda: app.move_page(app.current_page, -1)),
+            _tool(app, ft.Icons.ARROW_FORWARD, "Сдвинуть полосу вправо",
+                  lambda: app.move_page(app.current_page, 1)),
+            _tool(app, ft.Icons.COPY_ALL_OUTLINED, "Дублировать полосу",
+                  lambda: app.duplicate_page(app.current_page)),
+            _tool(app, ft.Icons.CLOSE, "Удалить полосу",
+                  lambda: app.remove_page(app.current_page)),
+            ft.Container(expand=True),
+            c.ghost_button("Сетка полосы", lambda _e: app.navigate("grid_edit")),
+        ],
+        spacing=4,
+        vertical_alignment=ft.CrossAxisAlignment.CENTER,
     )
 
     rows: list[ft.Control] = []
@@ -408,7 +429,7 @@ def build_left_rail(app: AppState) -> ft.Control:
     return c.rail(
         ft.Column(
             [
-                c.panel_section("Полосы", pages, spacing=10),
+                c.panel_section("Полосы", pages, page_tools, spacing=8),
                 ft.Row(
                     [
                         t.caps("Статьи"),
@@ -599,6 +620,13 @@ def _menu_bar(app: AppState) -> ft.Control:
                             t.text(f"{app.zoom * 100:.0f} %", size=12, font=t.MONO),
                             ft.Container(ft.Text("+", size=13, color=t.TEXT_SECONDARY),
                                          on_click=lambda _e: zoom(0.06), padding=6, ink=True),
+                            ft.Container(
+                                t.text("вписать", size=11, color=t.TEXT_MUTED),
+                                on_click=lambda _e: app.zoom_to_fit(),
+                                padding=ft.Padding.symmetric(vertical=4, horizontal=8),
+                                ink=True,
+                                tooltip="Подогнать масштаб под окно",
+                            ),
                         ],
                         spacing=2,
                     ),
@@ -610,6 +638,21 @@ def _menu_bar(app: AppState) -> ft.Control:
         height=34,
         bgcolor=t.BG_WINDOW,
         padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+    )
+
+
+def _tool(app: AppState, icon, hint: str, action) -> ft.Control:
+    """Мелкая кнопка-иконка для операций с полосой."""
+    return ft.Container(
+        content=ft.Icon(icon, size=14, color=t.TEXT_SECONDARY),
+        width=26,
+        height=26,
+        alignment=ft.Alignment.CENTER,
+        border=ft.Border.all(1, t.BORDER_BASE),
+        border_radius=t.RADIUS_CONTROL,
+        on_click=lambda _e: action(),
+        ink=True,
+        tooltip=hint,
     )
 
 
