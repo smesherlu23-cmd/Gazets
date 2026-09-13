@@ -1,7 +1,7 @@
-"""Правая колонка вёрстки: вкладки «Стиль | Типографика | Блокъ | Бумага».
+"""Правая колонка вёрстки: вкладки «Стиль | Типографика | Блок | Бумага».
 
 Панели живут внутри главного экрана (README, экран 07): полоса остаётся видимой,
-любое измененiе применяется сразу и уходитъ въ пересборку превью.
+любое изменение применяется сразу и уходит в пересборку превью.
 """
 
 from __future__ import annotations
@@ -10,14 +10,14 @@ import pathlib
 
 import flet as ft
 
-from .. import fonts, storage
+from .. import storage
 from ..models import ImageRef
-from ..presets import MODULE_TITLES, STYLE_PRESETS, apply_preset
+from ..presets import MODULE_TITLES
 from . import common as c
 from . import theme as t
 from .state import AppState
 
-TABS = [("style", "Стиль"), ("typography", "Типографика"), ("block", "Блокъ"), ("paper", "Бумага")]
+TABS = [("block", "Блок"), ("paper", "Бумага")]
 
 INK_SWATCHES = ["#15120e", "#1f2a44", "#6b3226", "#2a3a2c"]
 PAPER_SWATCHES = ["#efe7d4", "#f1ece0", "#eae5d9", "#f0eee6", "#e8e0cd", "#e4ded0"]
@@ -56,12 +56,7 @@ def build(app: AppState) -> ft.Control:
         spacing=0,
     )
 
-    body = {
-        "style": _style_panel,
-        "typography": _typography_panel,
-        "block": _block_panel,
-        "paper": _paper_panel,
-    }[app.panel_tab](app)
+    body = {"block": _block_panel, "paper": _paper_panel}.get(app.panel_tab, _block_panel)(app)
 
     return ft.Container(
         content=ft.Column(
@@ -82,7 +77,7 @@ def build(app: AppState) -> ft.Control:
                                 expand=True,
                             ),
                             ft.Container(
-                                c.primary_button("Экспортъ…", lambda _e: app.navigate("export")),
+                                c.primary_button("Экспорт…", lambda _e: app.navigate("export")),
                                 expand=True,
                             ),
                         ],
@@ -131,172 +126,7 @@ def _swatches(values: list[str], current: str, on_pick) -> ft.Control:
     )
 
 
-# ------------------------------------------------------------------------ стиль
-
-
-def _style_panel(app: AppState) -> ft.Control:
-    project = app.project
-    style = project.style
-
-    def pick_preset(preset_id: str) -> None:
-        apply_preset(project, preset_id)
-        app.touch(rebuild=True)
-
-    def set_value(field: str, value) -> None:
-        setattr(style, field, value)
-        app.touch(rebuild=True)
-
-    return ft.Column(
-        [
-            c.panel_section(
-                "Пресетъ полосы",
-                c.chip_row(
-                    [(preset.id, preset.name) for preset in STYLE_PRESETS],
-                    style.preset_id,
-                    pick_preset,
-                    height=28,
-                ),
-                spacing=10,
-            ),
-            c.panel_section("Бумага", _swatches(PAPER_SWATCHES, style.paper_color,
-                                                lambda value: set_value("paper_color", value)),
-                            spacing=10),
-            c.panel_section("Краска", _swatches(INK_SWATCHES, style.ink_color,
-                                                lambda value: _set_ink(app, value)), spacing=10),
-            c.panel_section(
-                "Рамка шапки",
-                c.segment(
-                    [("none", "Нѣтъ"), ("double_rule", "Линейка"), ("ornament", "Орнаментъ")],
-                    style.masthead_frame,
-                    lambda value: set_value("masthead_frame", value),
-                ),
-                spacing=10,
-            ),
-            c.panel_section(
-                "Приёмы набора",
-                c.toggle("Межколоночныя линейки", style.column_rules,
-                         lambda value: set_value("column_rules", value)),
-                c.toggle("Растеканiе краски", style.ink_spread,
-                         lambda value: set_value("ink_spread", value)),
-                c.toggle("Заголовки капителью", style.uppercase_headlines,
-                         lambda value: set_value("uppercase_headlines", value)),
-                c.toggle("Рубрики вывороткой", style.invert_rubrics,
-                         lambda value: set_value("invert_rubrics", value)),
-                spacing=12,
-            ),
-            c.panel_section(
-                "Шапка",
-                c.secondary_button("Экранъ бренда изданiя", lambda _e: app.navigate("brand")),
-                spacing=10,
-            ),
-        ],
-        spacing=22,
-    )
-
-
-def _set_ink(app: AppState, value: str) -> None:
-    app.project.style.ink_color = value
-    app.project.brand.ink = value
-    app.touch(rebuild=True)
-
-
-# ------------------------------------------------------------------ типографика
-
-
-def _typography_panel(app: AppState) -> ft.Control:
-    typo = app.project.typography
-    families = fonts.available_families()
-
-    def set_font(field: str):
-        def handler(value: str) -> None:
-            setattr(typo, field, value)
-            app.touch(rebuild=True)
-
-        return handler
-
-    def size_field(label: str, field: str, step: float = 0.5, decimals: int = 1) -> ft.Control:
-        return c.stepper(
-            label,
-            getattr(typo, field),
-            lambda value: (setattr(typo, field, value), app.touch())[0],
-            step=step,
-            minimum=4,
-            maximum=140,
-            decimals=decimals,
-            width=92,
-        )
-
-    warn = [
-        name
-        for name in (typo.heading_font, typo.body_font, typo.caption_font)
-        if not fonts.supports_cyrillic(name)
-    ]
-    note = (
-        f"Въ гарнитуре «{warn[0]}» нѣтъ кириллицы — она подменяется "
-        f"на {fonts.FALLBACK_FOR_CYRILLIC}."
-        if warn
-        else "Списокъ — встроенныя гарнитуры и установленныя въ системе."
-    )
-
-    sample = ft.Container(
-        content=ft.Row(
-            [
-                ft.Text("Н", size=40, color="#15120e", font_family=f"{typo.heading_font} Bold"),
-                ft.Container(
-                    ft.Text(
-                        "очью, около половины перваго, въ третьемъ пролёте Нижняго дока "
-                        "обрушилась часть кровли.",
-                        size=11,
-                        color="#1c1812",
-                        font_family=typo.body_font,
-                        text_align=ft.TextAlign.JUSTIFY,
-                    ),
-                    expand=True,
-                ),
-            ],
-            spacing=4,
-            vertical_alignment=ft.CrossAxisAlignment.START,
-        ),
-        bgcolor=app.project.style.paper_color,
-        padding=10,
-        border_radius=4,
-    )
-
-    return ft.Column(
-        [
-            c.panel_section(
-                "Гарнитуры",
-                c.select("Заголовки", typo.heading_font, families, set_font("heading_font")),
-                c.select("Основной текстъ", typo.body_font, families, set_font("body_font")),
-                c.select("Рубрики и подписи", typo.caption_font, families, set_font("caption_font")),
-                t.hint(note, size=11, color=t.TEXT_FAINTER),
-                spacing=12,
-            ),
-            c.panel_section(
-                "Кегли, пт",
-                size_field("Названiе изданiя", "masthead_pt"),
-                size_field("Главный заголовокъ", "lead_headline_pt"),
-                size_field("Заголовокъ статьи", "article_headline_pt"),
-                size_field("Основной текстъ", "body_pt", step=0.1, decimals=1),
-                c.stepper(
-                    "Интерлиньяжъ",
-                    typo.leading,
-                    lambda value: (setattr(typo, "leading", value), app.touch())[0],
-                    step=0.02,
-                    minimum=1.0,
-                    maximum=2.4,
-                    decimals=2,
-                    width=92,
-                ),
-                spacing=12,
-            ),
-            c.panel_section("Образецъ", sample, spacing=10),
-        ],
-        spacing=22,
-    )
-
-
-# ------------------------------------------------------------------------ блокъ
+# ------------------------------------------------------------------------ блок
 
 
 def _block_panel(app: AppState) -> ft.Control:
@@ -304,10 +134,10 @@ def _block_panel(app: AppState) -> ft.Control:
     if block is None:
         return ft.Column(
             [
-                t.caps("Блокъ не выбранъ"),
+                t.caps("Блок не выбран"),
                 t.hint(
                     "Щёлкните по блоку на полосе — здесь появятся колонки, выключка, "
-                    "буквица и картинка. Двойной щелчокъ открываетъ редакторъ статьи.",
+                    "буквица и картинка. Двойной щелчок открывает редактор статьи.",
                     size=12,
                 ),
             ],
@@ -327,12 +157,15 @@ def _block_panel(app: AppState) -> ft.Control:
         if percent <= 100
         else f"не помещается: {fit.overflow_chars if fit else 0} зн."
     )
+    if block.article_part == 1 and article is not None:
+        source = app.project.page_of_article(article.id, part=0)
+        caption += f" · продолжение со стр. {source + 1}" if source is not None else ""
     selection_card = c.card(
         ft.Column(
             [
                 t.text(block.label, size=13, color=t.TEXT_PRIMARY, weight="500"),
                 t.hint(
-                    f"{'Статья' if article else 'Модули' if block.modules else 'Пустой блокъ'}"
+                    f"{'Статья' if article else 'Модули' if block.modules else 'Пустой блок'}"
                     f" · {block.columns} кол. · {int(fit.width) if fit else 0}×{int(fit.height) if fit else 0} px",
                     size=11,
                     color=t.TEXT_MUTED,
@@ -361,7 +194,7 @@ def _block_panel(app: AppState) -> ft.Control:
         if image is not None:
             image_section = [
                 c.panel_section(
-                    "Изображенiе",
+                    "Изображение",
                     ft.Row(
                         [
                             ft.Container(
@@ -373,7 +206,7 @@ def _block_panel(app: AppState) -> ft.Control:
                                         fit=ft.BoxFit.COVER,
                                     )
                                     if _image_path(app, image)
-                                    else ft.Text("нѣтъ", size=10, color=t.TEXT_FAINT)
+                                    else ft.Text("нет", size=10, color=t.TEXT_FAINT)
                                 ),
                                 width=64,
                                 height=46,
@@ -389,7 +222,7 @@ def _block_panel(app: AppState) -> ft.Control:
                                         font=t.MONO,
                                         color=t.TEXT_SECONDARY,
                                     ),
-                                    t.hint(f"высота въ блоке {image.height_px} px", size=11),
+                                    t.hint(f"высота в блоке {image.height_px} px", size=11),
                                 ],
                                 spacing=4,
                                 expand=True,
@@ -398,7 +231,7 @@ def _block_panel(app: AppState) -> ft.Control:
                         spacing=10,
                     ),
                     c.chip_row(
-                        [("halftone", "Полутонъ"), ("sepia", "Сепiя"), ("bw", "Ч/Б"), ("none", "Безъ")],
+                        [("halftone", "Полутон"), ("sepia", "Сепия"), ("bw", "Ч/Б"), ("none", "Без")],
                         image.filter,
                         lambda value: _set_image_filter(app, value),
                         height=28,
@@ -417,14 +250,14 @@ def _block_panel(app: AppState) -> ft.Control:
                         image.caption,
                         lambda value: _set_image_caption(app, value),
                     ),
-                    c.ghost_button("Убрать снимокъ", lambda _e: _drop_image(app)),
+                    c.ghost_button("Убрать снимок", lambda _e: _drop_image(app)),
                     spacing=10,
                 )
             ]
         else:
             image_section = [
                 c.panel_section(
-                    "Изображенiе",
+                    "Изображение",
                     c.secondary_button("Вставить фото…", lambda _e: app.page.run_task(_pick_image, app)),
                     spacing=10,
                 )
@@ -432,30 +265,16 @@ def _block_panel(app: AppState) -> ft.Control:
 
     modules_section: list[ft.Control] = []
     if not article:
+        editors: list[ft.Control] = []
+        for index, module in enumerate(block.modules):
+            editors.append(_module_editor(app, index, module))
         modules_section = [
             c.panel_section(
-                "Модули въ блоке",
-                ft.Column(
-                    [
-                        ft.Row(
-                            [
-                                t.text(MODULE_TITLES.get(module.kind, module.kind), size=12,
-                                       color=t.TEXT_SECONDARY, expand=True),
-                                ft.Container(
-                                    ft.Icon(ft.Icons.CLOSE, size=13, color=t.TEXT_FAINT),
-                                    on_click=(lambda index: lambda _e: _remove_module(app, index))(index),
-                                    padding=4,
-                                    ink=True,
-                                ),
-                            ]
-                        )
-                        for index, module in enumerate(block.modules)
-                    ],
-                    spacing=6,
-                )
-                if block.modules
-                else t.hint("Пусто — добавьте модуль изъ левой панели", size=11),
-                spacing=8,
+                "Модули в блоке",
+                ft.Column(editors, spacing=14)
+                if editors
+                else t.hint("Пусто — добавьте модуль из левой панели", size=11),
+                spacing=10,
             )
         ]
 
@@ -463,9 +282,9 @@ def _block_panel(app: AppState) -> ft.Control:
         [
             selection_card,
             c.panel_section(
-                "Наборъ",
+                "Набор",
                 c.stepper(
-                    "Колонокъ въ блоке",
+                    "Колонок в блоке",
                     block.columns,
                     lambda value: set_value("columns", int(value)),
                     minimum=1,
@@ -475,22 +294,22 @@ def _block_panel(app: AppState) -> ft.Control:
                 c.toggle("Буквица у лида", block.drop_cap, lambda value: set_value("drop_cap", value)),
                 c.toggle("Межколоночныя линейки", block.column_rules,
                          lambda value: set_value("column_rules", value)),
-                c.toggle("Переносы словъ", block.hyphens, lambda value: set_value("hyphens", value)),
+                c.toggle("Переносы слов", block.hyphens, lambda value: set_value("hyphens", value)),
                 spacing=12,
             ),
             c.panel_section(
                 "Выключка",
                 c.segment(
-                    [("left", "Влево"), ("justify", "По ширине"), ("center", "Центръ")],
+                    [("left", "Влево"), ("justify", "По ширине"), ("center", "Центр")],
                     block.align,
                     lambda value: set_value("align", value),
                 ),
                 spacing=10,
             ),
             c.panel_section(
-                "Заголовокъ",
+                "Заголовок",
                 c.stepper(
-                    "Масштабъ кегля",
+                    "Масштаб кегля",
                     block.headline_scale,
                     lambda value: set_value("headline_scale", value),
                     step=0.05,
@@ -503,15 +322,16 @@ def _block_panel(app: AppState) -> ft.Control:
             ),
             *image_section,
             *modules_section,
+            *(_continuation_section(app, article, block) if article else []),
             *(
                 [
                     c.panel_section(
                         "Статья",
                         c.secondary_button(
-                            "Открыть редакторъ",
+                            "Открыть редактор",
                             lambda _e: _edit_article(app, article.id),
                         ),
-                        c.ghost_button("Снять съ полосы", lambda _e: _detach(app, article.id)),
+                        c.ghost_button("Снять с полосы", lambda _e: _detach(app, article.id)),
                         spacing=10,
                     )
                 ]
@@ -521,6 +341,66 @@ def _block_panel(app: AppState) -> ft.Control:
         ],
         spacing=22,
     )
+
+
+def _continuation_section(app: AppState, article, block) -> list[ft.Control]:
+    """Перенос остатка статьи на другую полосу — там, где видно переполнение."""
+    if block.article_part == 1:
+        return [
+            c.panel_section(
+                "Продолжение",
+                t.hint(
+                    "Это окончание статьи. Текст делится автоматически: правьте начало "
+                    "на исходной полосе, остаток подтянется сюда.",
+                    size=11,
+                ),
+                c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id)),
+                spacing=10,
+            )
+        ]
+
+    pages = len(app.project.pages)
+    current_page = app.project.page_of_article(article.id, part=0)
+    target = app.continuation_target or (
+        article.continued_on or min(pages, (current_page or 0) + 2)
+    )
+    controls: list[ft.Control] = [
+        c.stepper(
+            "Полоса",
+            target,
+            lambda value: _set_target(app, int(value)),
+            minimum=1,
+            maximum=max(1, pages),
+            width=104,
+        ),
+        c.secondary_button(
+            "Перенести остаток",
+            lambda _e: app.split_article(article.id, int(target) - 1),
+            height=30,
+        ),
+    ]
+    if article.split_at is not None:
+        controls.append(
+            t.hint(
+                f"Перенесено {len(article.part_text(1))} зн. на стр. {article.continued_on}",
+                size=11,
+                color=t.OK_TEXT,
+            )
+        )
+        controls.append(c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id)))
+    else:
+        controls.append(
+            t.hint(
+                "Программа подберёт точку разрыва так, чтобы начало влезло в блок, "
+                "и поставит строки «продолжение на стр.» и «начало на стр.».",
+                size=11,
+            )
+        )
+    return [c.panel_section("Продолжение на другой полосе", *controls, spacing=10)]
+
+
+def _set_target(app: AppState, value: int) -> None:
+    app.continuation_target = value
 
 
 def _image_path(app: AppState, image: ImageRef):
@@ -562,7 +442,7 @@ def _drop_image(app: AppState) -> None:
 
 async def _pick_image(app: AppState) -> None:
     files = await app.file_picker().pick_files(
-        dialog_title="Выберите изображенiе",
+        dialog_title="Выберите изображение",
         allowed_extensions=["png", "jpg", "jpeg", "webp", "bmp"],
     )
     if not files:
@@ -573,6 +453,122 @@ async def _pick_image(app: AppState) -> None:
         return
     relative = storage.import_image(pathlib.Path(files[0].path), app.project_path)
     article.image = ImageRef(path=relative, caption="", height_px=96)
+    app.touch(rebuild=True)
+
+
+def _module_editor(app: AppState, index: int, module) -> ft.Control:
+    """Карточка модуля: заголовок и содержимое правятся прямо здесь."""
+
+    def field(name: str):
+        def handler(value) -> None:
+            setattr(module, name, value)
+            app.touch()
+
+        return handler
+
+    def set_row(row_index: int, cell: int):
+        def handler(value) -> None:
+            while len(module.rows) <= row_index:
+                module.rows.append(["", ""])
+            row = module.rows[row_index]
+            while len(row) < 2:
+                row.append("")
+            row[cell] = value
+            app.touch()
+
+        return handler
+
+    controls: list[ft.Control] = [
+        ft.Row(
+            [
+                t.caps(MODULE_TITLES.get(module.kind, module.kind), size=10),
+                ft.Container(
+                    ft.Icon(ft.Icons.CLOSE, size=13, color=t.TEXT_FAINT),
+                    on_click=lambda _e: _remove_module(app, index),
+                    padding=4,
+                    ink=True,
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        )
+    ]
+    if module.kind != "quote":
+        controls.append(c.field("", module.title, field("title"), hint="заголовок модуля",
+                                height=30))
+    if module.kind == "rates":
+        rows = module.rows or [["", ""], ["", ""], ["", ""]]
+        for row_index, row in enumerate(rows):
+            controls.append(
+                ft.Row(
+                    [
+                        ft.Container(
+                            c.field("", row[0] if row else "", set_row(row_index, 0),
+                                    hint="статья", height=30),
+                            expand=3,
+                        ),
+                        ft.Container(
+                            c.field("", row[1] if len(row) > 1 else "", set_row(row_index, 1),
+                                    hint="цена", height=30),
+                            expand=2,
+                        ),
+                    ],
+                    spacing=8,
+                )
+            )
+        controls.append(
+            c.ghost_button("+ строка", lambda _e: _add_rate_row(app, module))
+        )
+    elif module.kind == "photo":
+        controls.append(
+            c.secondary_button("Выбрать снимок…",
+                               lambda _e: app.page.run_task(_pick_module_image, app, module),
+                               height=30)
+        )
+        if module.image is not None:
+            controls.append(c.field("", module.image.caption, _module_caption(app, module),
+                                    hint="подпись под снимком", height=30))
+    else:
+        controls.append(c.field("", module.text, field("text"), multiline=True,
+                                hint="текст модуля"))
+    if module.kind == "quote":
+        controls.append(c.field("", module.attribution, field("attribution"),
+                                hint="кто сказал", height=30))
+    if module.kind in ("ad", "weather"):
+        controls.append(c.toggle("В рамке", module.framed, _module_framed(app, module)))
+    return c.card(ft.Column(controls, spacing=8), padding=10)
+
+
+def _module_framed(app: AppState, module):
+    def handler(value: bool) -> None:
+        module.framed = value
+        app.touch(rebuild=True)
+
+    return handler
+
+
+def _module_caption(app: AppState, module):
+    def handler(value: str) -> None:
+        if module.image is not None:
+            module.image.caption = value
+            app.touch()
+
+    return handler
+
+
+def _add_rate_row(app: AppState, module) -> None:
+    module.rows.append(["", ""])
+    app.touch(rebuild=True)
+
+
+async def _pick_module_image(app: AppState, module) -> None:
+    files = await app.file_picker().pick_files(
+        dialog_title="Изображение для модуля",
+        allowed_extensions=["png", "jpg", "jpeg", "webp", "bmp"],
+    )
+    if not files:
+        return
+    relative = storage.import_image(pathlib.Path(files[0].path), app.project_path)
+    module.image = ImageRef(path=relative, caption="", height_px=120)
     app.touch(rebuild=True)
 
 
@@ -619,7 +615,7 @@ def _paper_panel(app: AppState) -> ft.Control:
                     font_family="PT Sans Narrow Bold",
                 ),
                 ft.Text(
-                    "Рукописи не возвращаются. Подписка на мѣсяцъ — одинъ рубль двадцать копеекъ.",
+                    "Рукописи не возвращаются. Подписка на месяц — один рубль двадцать копеек.",
                     size=10,
                     color="#1c1812",
                     font_family="PT Serif",
@@ -637,13 +633,13 @@ def _paper_panel(app: AppState) -> ft.Control:
 
     return ft.Column(
         [
-            c.toggle("Состариванiе", paper.enabled, lambda value: set_value("enabled", value)),
+            c.toggle("Состаривание", paper.enabled, lambda value: set_value("enabled", value)),
             c.panel_section(
                 "Интенсивность",
                 c.slider(paper.intensity, set_intensity, 0, 100, divisions=100),
                 ft.Row(
                     [
-                        t.hint("0 — чистый листъ", size=11, color=t.TEXT_FAINTER),
+                        t.hint("0 — чистый лист", size=11, color=t.TEXT_FAINTER),
                         t.hint("100 — потрёпанный", size=11, color=t.TEXT_FAINTER),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -651,8 +647,8 @@ def _paper_panel(app: AppState) -> ft.Control:
                 spacing=6,
             ),
             c.panel_section(
-                "Составляющiя",
-                c.checkbox("Желтизна и сепiя", paper.yellowing, lambda v: set_value("yellowing", v)),
+                "Составляющия",
+                c.checkbox("Желтизна и сепия", paper.yellowing, lambda v: set_value("yellowing", v)),
                 c.checkbox("Пятна и разводы", paper.stains, lambda v: set_value("stains", v)),
                 c.checkbox("Неравномерность печати", paper.unevenness,
                            lambda v: set_value("unevenness", v)),
@@ -662,7 +658,7 @@ def _paper_panel(app: AppState) -> ft.Control:
             ),
             c.panel_section("Проба", sample, spacing=10),
             t.hint(
-                "Эффектъ применяется ко всей полосе, включая изображенiя, "
+                "Эффект применяется ко всей полосе, включая изображения, "
                 "и учитывается при экспорте.",
                 size=11,
                 color=t.TEXT_FAINTER,

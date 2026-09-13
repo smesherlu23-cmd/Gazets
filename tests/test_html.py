@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from pechatnya.models import Article, Paper
-from pechatnya.presets import demo_project, new_project
+from pechatnya.presets import new_project
+from tests.fixtures import sample_project
 from pechatnya.render import paper as paper_layer
 from pechatnya.render.html import (
     RenderOptions,
@@ -27,13 +28,13 @@ def test_split_blocks_recognises_structure() -> None:
 
 
 def test_page_document_contains_masthead_and_fonts() -> None:
-    project = demo_project()
+    project = sample_project()
 
     html = page_document(project, 0)
 
     assert "@font-face" in html
     assert project.brand.display_name in html
-    assert "ПРОДОЛЖЕНIЕ НА СТР. 3" in html
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" in html
     assert 'data-fit=' in html  # крючки для замера вместимости
     assert "column-count:3" in html
 
@@ -66,7 +67,7 @@ def test_aging_layer_follows_checkboxes() -> None:
 
 
 def test_export_document_has_page_break_per_sheet() -> None:
-    project = demo_project()
+    project = sample_project()
 
     html = issue_document(project, RenderOptions(for_export=True), page_indexes=[0, 1, 2])
 
@@ -76,10 +77,47 @@ def test_export_document_has_page_break_per_sheet() -> None:
 
 
 def test_guides_and_borders_only_in_preview() -> None:
-    project = demo_project()
+    project = sample_project()
 
     preview = page_document(project, 0, RenderOptions(show_guides=True, show_block_borders=True))
     export = page_document(project, 0, RenderOptions(show_guides=True, for_export=True))
 
     assert 'class="guides"' in preview
     assert 'class="guides"' not in export
+
+
+def test_continuation_splits_text_between_pages() -> None:
+    """Остаток статьи печатается на другой полосе со ссылками в обе стороны."""
+    project = sample_project()
+    lead = project.articles[0]
+    split_at = 900
+
+    project.place_continuation(lead.id, 2, split_at)
+    first = page_document(project, 0)
+    third = page_document(project, 2)
+
+    assert "ПРОДОЛЖЕНИЕ НА СТР. 3" in first
+    assert "НАЧАЛО НА СТР. 1" in third
+    # текст поделён, а не продублирован (сравниваем куски внутри абзацев:
+    # абзацы в HTML разложены по <p>, поэтому срез через перенос строки не ищем)
+    head_fragment = lead.part_text(0).split("\n")[-1][-40:]
+    tail_fragment = lead.part_text(1).split("\n")[0][:40]
+    assert head_fragment in first and head_fragment not in third
+    assert tail_fragment in third and tail_fragment not in first
+    # лид, автор и снимок остаются в начале статьи
+    assert lead.subtitle in first and lead.subtitle not in third
+    assert 'class="dropcap"' in first and 'class="dropcap"' not in third
+
+
+def test_dropping_continuation_returns_whole_text() -> None:
+    project = sample_project()
+    lead = project.articles[0]
+    project.place_continuation(lead.id, 2, 900)
+
+    project.drop_continuation(lead.id)
+
+    assert lead.split_at is None
+    assert lead.continued_on is None
+    assert project.block_of(lead.id, part=1) is None
+    assert lead.part_text(0) == lead.body
+    assert "ПРОДОЛЖЕНИЕ НА СТР." not in page_document(project, 0)

@@ -1,9 +1,9 @@
-"""Экранъ 05 — главный экранъ вёрстки: полоса, статьи, панели, статусъ.
+"""Экран 05 — главный экран вёрстки: полоса, статьи, панели, статус.
 
-Превью — картинка, отрендеренная браузерным движкомъ; поверхъ неё интерфейсъ
-кладётъ прозрачные слои: зоны выделенiя блоковъ, цели для перетаскиванiя статей
-и ручки для растягиванiя границъ. Координаты слоёвъ приходятъ изъ того же
-замера, что считаетъ вместимость (см. render.engine.MEASURE_JS).
+Превью — картинка, отрендеренная браузерным движком; поверх неё интерфейс
+кладёт прозрачные слои: зоны выделения блоков, цели для перетаскивания статей
+и ручки для растягивания границ. Координаты слоёв приходят из того же
+замера, что считает вместимость (см. render.engine.MEASURE_JS).
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ HANDLE = 8.0
 
 
 class LayoutScreen:
-    """Держитъ ссылки на контролы, чтобы обновлять превью безъ пересборки экрана."""
+    """Держит ссылки на контролы, чтобы обновлять превью без пересборки экрана."""
 
     def __init__(self, app: AppState) -> None:
         self.app = app
@@ -41,7 +41,7 @@ class LayoutScreen:
             content=ft.Column(
                 [
                     ft.ProgressRing(width=18, height=18, stroke_width=2, color=t.ACCENT),
-                    t.hint("Собираемъ полосу…", size=12),
+                    t.hint("Собираем полосу…", size=12),
                 ],
                 spacing=10,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -176,7 +176,7 @@ class LayoutScreen:
 
     # ------------------------------------------------------------ манипуляции
     def _resize_columns(self, row: Row, index: int, delta: float) -> None:
-        """Тянемъ границу между блоками: ширина одного растётъ, сосѣдняго — убываетъ."""
+        """Тянем границу между блоками: ширина одного растёт, соседняго — убывает."""
         left, right = row.blocks[index], row.blocks[index + 1]
         left_fit = self.app.fit_of(left.id)
         right_fit = self.app.fit_of(right.id)
@@ -232,19 +232,19 @@ class LayoutScreen:
         else:
             app.rebuild()
 
-    # ------------------------------------------------------------------ статусъ
+    # ------------------------------------------------------------------ статус
     def _fill_status(self) -> None:
         app = self.app
         overflow = app.overflowing_blocks()
         items: list[ft.Control] = [
-            t.hint(f"Полоса {app.current_page + 1} изъ {len(app.project.pages)}", size=11,
+            t.hint(f"Полоса {app.current_page + 1} из {len(app.project.pages)}", size=11,
                    color=t.TEXT_MUTED),
-            t.hint(f"Масштабъ {app.zoom * 100:.0f} %", size=11, color=t.TEXT_MUTED),
+            t.hint(f"Масштаб {app.zoom * 100:.0f} %", size=11, color=t.TEXT_MUTED),
         ]
         if overflow:
             items.append(
                 ft.Row(
-                    [c.dot(t.WARN), t.hint(f"Переполненiе: {len(overflow)} блокъ", size=11, color=t.WARN)],
+                    [c.dot(t.WARN), t.hint(f"Переполнение: {len(overflow)} блок", size=11, color=t.WARN)],
                     spacing=6,
                 )
             )
@@ -252,18 +252,20 @@ class LayoutScreen:
             items.append(
                 ft.Row([c.dot(t.OK_BAR), t.hint("Всё помещается", size=11, color=t.OK_TEXT)], spacing=6)
             )
+        if app.busy_note:
+            items.append(t.hint(app.busy_note, size=11, color=t.ACCENT_TEXT))
         if app.preview_error:
-            items.append(t.hint(f"Рендеръ: {app.preview_error[:80]}", size=11, color=t.WARN))
+            items.append(t.hint(f"Рендер: {app.preview_error[:80]}", size=11, color=t.WARN))
         items.append(ft.Container(expand=True))
         items.append(
             t.hint(
-                f"Бумага: состариванiе {app.project.paper.intensity if app.project.paper.enabled else 0} %",
+                f"Бумага: состаривание {app.project.paper.intensity if app.project.paper.enabled else 0} %",
                 size=11,
                 color=t.TEXT_MUTED,
             )
         )
         items.append(t.hint(f"Пересборка {app.last_render_ms} мс", size=11, color=t.TEXT_FAINTER))
-        items.append(t.hint(f"Автосохраненiе {app.autosave_stamp}", size=11, color=t.TEXT_MUTED))
+        items.append(t.hint(f"Автосохранение {app.autosave_stamp}", size=11, color=t.TEXT_MUTED))
         self.status.controls = items
 
     # -------------------------------------------------------------------- сборка
@@ -377,7 +379,7 @@ def build_left_rail(app: AppState) -> ft.Control:
                 content=ft.Row(
                     [
                         t.caps("Не размещено", size=10, color=t.TEXT_FAINT),
-                        t.hint("перетащите въ блокъ", size=10, color=t.TEXT_FAINTER),
+                        t.hint("перетащите в блок", size=10, color=t.TEXT_FAINTER),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                 ),
@@ -406,10 +408,10 @@ def build_left_rail(app: AppState) -> ft.Control:
     return c.rail(
         ft.Column(
             [
-                c.panel_section("Полосы / Pages", pages, spacing=10),
+                c.panel_section("Полосы", pages, spacing=10),
                 ft.Row(
                     [
-                        t.caps("Статьи / Articles"),
+                        t.caps("Статьи"),
                         t.hint(str(len(app.project.articles)), size=11, color=t.TEXT_MUTED),
                     ],
                     alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
@@ -417,7 +419,7 @@ def build_left_rail(app: AppState) -> ft.Control:
                 ft.Column(rows, spacing=2, scroll=ft.ScrollMode.AUTO, expand=True),
                 c.primary_button("Добавить статью", lambda _e: _add_article(app), icon=ft.Icons.ADD,
                                  width=224),
-                c.panel_section("Модули / Modules", modules, spacing=8),
+                c.panel_section("Модули", modules, spacing=8),
             ],
             spacing=14,
             expand=True,
@@ -437,7 +439,7 @@ def _article_row(app: AppState, article: Article) -> ft.Control:
 
     lines: list[ft.Control] = [
         t.text(
-            article.rubric.upper() or ("НЕ РАЗМЕЩЕНО" if not placed else "БЕЗЪ РУБРИКИ"),
+            article.rubric.upper() or ("НЕ РАЗМЕЩЕНО" if not placed else "БЕЗ РУБРИКИ"),
             size=10,
             color=t.ACCENT if active else t.TEXT_FAINT,
             tracking=0.8,
@@ -577,16 +579,17 @@ def _menu_bar(app: AppState) -> ft.Control:
     return ft.Container(
         content=ft.Row(
             [
-                item("Файлъ", lambda _e: app.navigate("start")),
-                item("Изданiе", lambda _e: app.navigate("issue_edit")),
-                item("Бренд", lambda _e: app.navigate("brand")),
-                item("Пресеты", lambda _e: app.navigate("presets_edit")),
-                item("Сетка", lambda _e: app.navigate("grid_edit")),
-                item("Экспортъ", lambda _e: app.navigate("export")),
+                item("Проекты", lambda _e: app.navigate("start")),
+                _history_item(app, "Отменить", app.can_undo, app.undo),
+                _history_item(app, "Вернуть", app.can_redo, app.redo),
+                item("Номер", lambda _e: app.navigate("issue_edit")),
+                item("Издание", lambda _e: app.open_publications("layout")),
+                item("Сетка полосы", lambda _e: app.navigate("grid_edit")),
+                item("Экспорт", lambda _e: app.navigate("export")),
                 ft.Container(expand=True),
-                view_toggle("Сетка", app.show_guides, lambda _e: _toggle(app, "show_guides")),
+                view_toggle("Модульная сетка", app.show_guides,
+                            lambda _e: _toggle(app, "show_guides")),
                 view_toggle("Бумага", app.show_paper, lambda _e: _toggle(app, "show_paper")),
-                view_toggle("Границы блоковъ", app.show_borders, lambda _e: _toggle(app, "show_borders")),
                 ft.Container(width=1, height=18, bgcolor=t.BORDER_STRONG),
                 ft.Container(
                     content=ft.Row(
@@ -607,6 +610,19 @@ def _menu_bar(app: AppState) -> ft.Control:
         height=34,
         bgcolor=t.BG_WINDOW,
         padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+    )
+
+
+def _history_item(app: AppState, label: str, enabled: bool, action) -> ft.Control:
+    """Пункт меню, который гаснет, когда отменять нечего."""
+    return ft.Container(
+        content=t.text(label, size=12, color=t.TEXT_SECONDARY if enabled else t.TEXT_FAINTER),
+        padding=ft.Padding.symmetric(vertical=0, horizontal=10),
+        height=34,
+        alignment=ft.Alignment.CENTER,
+        on_click=(lambda _e: action()) if enabled else None,
+        ink=enabled,
+        disabled=not enabled,
     )
 
 

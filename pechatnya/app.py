@@ -1,11 +1,11 @@
-"""«Печатня» — конструкторъ игровыхъ газетъ. Точка входа и маршрутизацiя экрановъ.
+"""«Печатня» — конструктор игровых газет. Точка входа и маршрутизация экранов.
 
-Запускъ:
+Запуск:
 
     python -m pechatnya
 
-Интерфейсъ — Flet (десктопное окно), полоса рендерится браузернымъ движкомъ
-(см. docs/ARCHITECTURE.md). Приложенiе полностью офлайновое.
+Интерфейс — Flet (десктопное окно), полоса рендерится браузерным движком
+(см. docs/ARCHITECTURE.md). Приложение полностью офлайновое.
 """
 
 from __future__ import annotations
@@ -19,12 +19,11 @@ from . import fonts, storage
 from .ui import (
     common as c,
     screen_article,
-    screen_brand,
     screen_export,
     screen_grid,
     screen_issue,
     screen_layout,
-    screen_presets,
+    screen_publication,
     screen_start,
     theme as t,
 )
@@ -32,15 +31,13 @@ from .ui.state import AppState
 
 ROUTE_TITLES = {
     "start": "Проекты",
-    "issue": "Новый выпускъ · шагъ 1",
-    "presets": "Новый выпускъ · шагъ 2",
-    "grid": "Новый выпускъ · шагъ 3",
+    "issue": "Новый выпуск · шаг 1 из 2",
+    "grid": "Новый выпуск · шаг 2 из 2",
     "layout": "Вёрстка",
-    "article": "Редакторъ статьи",
-    "export": "Экспортъ",
-    "brand": "Брендъ изданiя",
-    "issue_edit": "Карточка изданiя",
-    "presets_edit": "Пресеты оформленiя",
+    "article": "Редактор статьи",
+    "export": "Экспорт",
+    "publications": "Издания",
+    "issue_edit": "Данные номера",
     "grid_edit": "Сетка полосы",
 }
 
@@ -56,7 +53,8 @@ def _titlebar(app: AppState) -> ft.Control:
                 t.text(project_label, size=12, color=t.TEXT_MUTED),
                 ft.Container(width=12),
                 c.ghost_button("Сохранить", lambda _e: _save(app)),
-                c.ghost_button("Полоса", lambda _e: app.navigate("layout")),
+                c.ghost_button("Сохранить как…", lambda _e: app.page.run_task(app.save_as)),
+                c.ghost_button("К вёрстке", lambda _e: app.navigate("layout")),
                 t.hint(app.engine_note, size=11, color=t.TEXT_FAINTER),
             ],
             spacing=12,
@@ -75,7 +73,7 @@ def _save(app: AppState) -> None:
 
 
 def _screen(app: AppState) -> ft.Control:
-    """Возвращаетъ контролъ текущаго маршрута, переиспользуя «живые» экраны."""
+    """Возвращает контрол текущаго маршрута, переиспользуя «живые» экраны."""
     route = app.route
     if route in ("layout",):
         screen = app.screens.get("layout")
@@ -103,11 +101,9 @@ def _screen(app: AppState) -> ft.Control:
         "start": screen_start.build,
         "issue": screen_issue.build,
         "issue_edit": screen_issue.build,
-        "presets": screen_presets.build,
-        "presets_edit": screen_presets.build,
         "grid": screen_grid.build,
         "grid_edit": screen_grid.build,
-        "brand": screen_brand.build,
+        "publications": screen_publication.build,
     }
     return builders.get(route, screen_start.build)(app)
 
@@ -141,7 +137,14 @@ def main(page: ft.Page) -> None:
             return
         key = (event.key or "").lower()
         if key == "s":
-            _save(app)
+            if event.shift:
+                page.run_task(app.save_as)
+            else:
+                _save(app)
+        elif key == "z":
+            app.redo() if event.shift else app.undo()
+        elif key == "y":
+            app.redo()
         elif key == "e":
             app.navigate("export")
         elif key == "n":
@@ -152,7 +155,7 @@ def main(page: ft.Page) -> None:
 
     page.add(ft.Column([header, root], spacing=0, expand=True))
 
-    # Открываемъ последнiй проектъ, иначе показываемъ демо-выпускъ.
+    # Открываем последний проект, иначе показываем демо-выпуск.
     recents = storage.recent_projects(1)
     if recents:
         try:

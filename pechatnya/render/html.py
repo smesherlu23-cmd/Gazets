@@ -178,27 +178,30 @@ def image_html(image: Optional[ImageRef], project_dir: Optional[pathlib.Path], h
 # ------------------------------------------------------------------------ модули
 
 
-def module_html(module: ModuleData, project_dir: Optional[pathlib.Path]) -> str:
+def module_html(
+    module: ModuleData, project_dir: Optional[pathlib.Path], for_export: bool = False
+) -> str:
     title = (
         f'<div class="mod-title">{esc(module.title)}</div>' if module.title else ""
     )
+    hint = "" if for_export else '<div class="mod-hint">заполните в панели «Блок»</div>'
     if module.kind == "rates":
+        filled = [row for row in module.rows if any(cell.strip() for cell in row)]
         rows = "".join(
-            f'<div class="rate"><span>{esc(row[0])}</span><span>{esc(row[1] if len(row) > 1 else "")}</span></div>'
-            for row in module.rows
+            f'<div class="rate"><span>{esc(row[0])}</span>'
+            f'<span>{esc(row[1] if len(row) > 1 else "")}</span></div>'
+            for row in filled
         )
-        return f'<div class="mod mod-rates">{title}{rows}</div>'
+        return f'<div class="mod mod-rates">{title}{rows or hint}</div>'
     if module.kind == "quote":
         attribution = (
             f'<div class="quote-attr">{esc(module.attribution)}</div>' if module.attribution else ""
         )
-        return (
-            f'<div class="mod mod-quote"><div class="quote-text">{inline_markup(module.text)}</div>'
-            f"{attribution}</div>"
-        )
+        body = f'<div class="quote-text">{inline_markup(module.text)}</div>' if module.text else hint
+        return f'<div class="mod mod-quote">{body}{attribution}</div>'
     if module.kind == "photo":
         return f'<div class="mod mod-photo">{image_html(module.image, project_dir, 64)}</div>'
-    body = f'<div class="mod-text">{inline_markup(module.text)}</div>' if module.text else ""
+    body = f'<div class="mod-text">{inline_markup(module.text)}</div>' if module.text else hint
     classes = "mod mod-framed" if module.framed else "mod"
     if module.kind == "ad":
         classes += " mod-ad"
@@ -214,33 +217,49 @@ def _article_html(
     typography: Typography,
     style: Style,
     project_dir: Optional[pathlib.Path],
+    from_page: Optional[int] = None,
 ) -> str:
+    """Блок статьи. ``block.article_part == 1`` — это «продолжение» на другой полосе."""
+    continuation = block.article_part == 1
     headline_px = typography.px("lead_headline_pt") * block.headline_scale
     parts: list[str] = []
     if article.rubric:
         parts.append(f'<div class="rubric">{esc(article.rubric)}</div>')
     title = article.title.upper() if style.uppercase_headlines else article.title
-    parts.append(
-        f'<h1 class="headline" style="font-size:{headline_px:.1f}px">{inline_markup(title)}</h1>'
-    )
-    if article.subtitle:
-        parts.append(f'<div class="lead">{inline_markup(article.subtitle)}</div>')
-    byline = " · ".join(item for item in (article.author, article.place_time) if item)
-    if byline:
+    if continuation:
         parts.append(
-            '<div class="byline"><span class="hair"></span>'
-            f'<span class="byline-text">{esc(byline.upper())}</span><span class="hair"></span></div>'
+            f'<h1 class="headline headline-jump" style="font-size:{headline_px * 0.55:.1f}px">'
+            f"{inline_markup(title)}</h1>"
         )
+        if from_page:
+            parts.append(f'<div class="jump-from">НАЧАЛО НА СТР. {from_page}</div>')
+    else:
+        parts.append(
+            f'<h1 class="headline" style="font-size:{headline_px:.1f}px">{inline_markup(title)}</h1>'
+        )
+        if article.subtitle:
+            parts.append(f'<div class="lead">{inline_markup(article.subtitle)}</div>')
+        byline = " · ".join(item for item in (article.author, article.place_time) if item)
+        if byline:
+            parts.append(
+                '<div class="byline"><span class="hair"></span>'
+                f'<span class="byline-text">{esc(byline.upper())}</span>'
+                '<span class="hair"></span></div>'
+            )
 
-    chunks = split_blocks(article.body)
+    chunks = split_blocks(article.part_text(block.article_part))
     body_parts: list[str] = []
-    figure = image_html(article.image, project_dir, 96) if article.image else ""
+    figure = (
+        image_html(article.image, project_dir, 96)
+        if article.image and not continuation
+        else ""
+    )
     for index, (kind, text) in enumerate(chunks):
         if kind == "subhead":
             body_parts.append(f'<div class="subhead">{esc(text)}</div>')
         elif kind == "quote":
             body_parts.append(f'<div class="inset-quote">{inline_markup(text)}</div>')
-        elif index == 0 and block.drop_cap and article.drop_cap:
+        elif index == 0 and block.drop_cap and article.drop_cap and not continuation:
             body_parts.append(
                 f'<p class="first">{_drop_cap(text, article.small_caps_opening)}</p>'
             )
@@ -251,9 +270,9 @@ def _article_html(
             figure = ""
     if figure:
         body_parts.insert(0, figure)
-    if article.continued_on:
+    if article.continued_on and not continuation:
         body_parts.append(
-            f'<div class="jump">ПРОДОЛЖЕНIЕ НА СТР. {article.continued_on} &#9656;</div>'
+            f'<div class="jump">ПРОДОЛЖЕНИЕ НА СТР. {article.continued_on} &#9656;</div>'
         )
 
     column_style = (
@@ -301,11 +320,19 @@ def _block_html(
 
     article = project.article(block.article_id)
     if article is not None:
-        inner = _article_html(article, block, project.typography, project.style, project_dir)
+        from_page = None
+        if block.article_part == 1:
+            source_page = project.page_of_article(block.article_id, part=0)
+            from_page = source_page + 1 if source_page is not None else None
+        inner = _article_html(
+            article, block, project.typography, project.style, project_dir, from_page
+        )
     elif block.modules:
         inner = (
             f'<div class="modules js-fit" data-fit="{block.id}">'
-            + "".join(module_html(module, project_dir) for module in block.modules)
+            + "".join(
+                module_html(module, project_dir, options.for_export) for module in block.modules
+            )
             + "</div>"
         )
     else:
@@ -324,18 +351,25 @@ def _block_html(
 # -------------------------------------------------------------------------- шапка
 
 
-def masthead_html(project: Project, page: Page) -> str:
+def masthead_html(project: Project, page: Page, options_for_export: bool = False) -> str:
     brand: Brand = project.brand
     issue = project.issue
     if not page.show_masthead:
         running = f"{issue.title} · № {issue.number} · {issue.date}"
         return f'<div class="running-head">{esc(running.upper())}</div>'
 
-    service = (
-        f'<div class="service"><div>№ {esc(issue.number)} · {esc(issue.year_line.upper())}</div>'
-        f"<div>{esc(issue.city.upper())} · {esc(issue.date.upper())}</div>"
-        f"<div>ЦЕНА {esc(issue.price.upper())}</div></div>"
-    )
+    def join(*parts: str) -> str:
+        return " · ".join(part for part in parts if part.strip())
+
+    left = join(f"№ {issue.number}" if issue.number.strip() else "", issue.year_line)
+    middle = join(issue.city, issue.date)
+    right = f"ЦЕНА {issue.price}" if issue.price.strip() else ""
+    service = ""
+    if any((left, middle, right)):
+        service = (
+            f'<div class="service"><div>{esc(left.upper())}</div>'
+            f"<div>{esc(middle.upper())}</div><div>{esc(right.upper())}</div></div>"
+        )
 
     def side(text: str) -> str:
         head, *rest = (text or "").split("|")
@@ -344,6 +378,9 @@ def masthead_html(project: Project, page: Page) -> str:
         return f'<div class="side">{esc(head)}<br>{middle}<br>{tail}</div>'
 
     logo_text = brand.display_name
+    placeholder = not logo_text.strip()
+    if placeholder:
+        logo_text = "" if options_for_export else "НАЗВАНИЕ ИЗДАНИЯ"
     logo_font = fonts.resolve_for_text(brand.logo_font, logo_text)
     logo_size = brand.logo_size_pt * 96 / 72
     tracking = brand.tracking_permille / 1000
@@ -353,7 +390,9 @@ def masthead_html(project: Project, page: Page) -> str:
         if brand.superline_enabled and brand.superline
         else ""
     )
-    logo_class = "logo" + (" logo-framed" if brand.logo_direction == "framed" else "")
+    logo_class = "logo" + (" logo-framed" if brand.logo_font_preset == "framed" else "")
+    if placeholder:
+        logo_class += " logo-placeholder"
     logo = (
         f'<div class="{logo_class}" style="font-family:\'{logo_font}\',serif;'
         f"font-size:{logo_size:.1f}px;letter-spacing:{tracking:.3f}em;"
@@ -490,6 +529,9 @@ html,body{{margin:0;padding:0;background:#101112}}
   font:italic 400 9.5px/1.4 '{typo.body_font}',serif;color:#3f372b;text-indent:0}}
 .caption-prefix{{font-style:normal;font-weight:700;font-family:'{typo.caption_font}',sans-serif;
   letter-spacing:.1em;font-size:8.5px}}
+.headline-jump{{font-weight:700}}
+.jump-from{{font:400 9px '{typo.caption_font}',sans-serif;letter-spacing:.16em;
+  color:var(--accent-ink);margin:4px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--rule)}}
 .jump{{border-top:1px solid var(--ink);margin-top:6px;padding-top:4px;text-indent:0;
   font:400 10px '{typo.caption_font}',sans-serif;letter-spacing:.1em;color:var(--accent-ink)}}
 .modules{{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:10px}}
@@ -506,6 +548,8 @@ html,body{{margin:0;padding:0;background:#101112}}
 .quote-text{{font:italic 700 14px/1.3 '{heading}',serif;color:var(--ink)}}
 .quote-attr{{font:400 9px '{typo.caption_font}',sans-serif;letter-spacing:.12em;color:var(--faint);margin-top:5px}}
 .mod-photo{{margin-top:auto}}
+.mod-hint{{font:italic 400 10px/1.4 '{typo.body_font}',serif;color:#8a8172}}
+.logo-placeholder{{color:#9b9182}}
 .empty-block{{flex:1;display:flex;align-items:center;justify-content:center;
   border:1px dashed rgba(90,81,69,.55);font:400 10px 'IBM Plex Mono',monospace;color:#6b6354;
   letter-spacing:.06em;text-align:center;padding:8px}}
@@ -572,7 +616,7 @@ def page_body_html(
 
     return (
         '<div class="sheet" id="sheet">'
-        f'<div class="inner">{masthead_html(project, page)}'
+        f'<div class="inner">{masthead_html(project, page, options.for_export)}'
         f'<div class="stack">{"".join(rows_html)}</div>'
         f"{folio_html(project, page_index)}</div>{layers}</div>"
     )

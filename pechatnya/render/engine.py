@@ -418,5 +418,5 @@ def engine_report() -> str:
     return {
         "playwright": "Рендер: Chromium (Playwright)",
         "cli": f"Рендер: {pathlib.Path(current._cli_path or '').name}",
-        "none": "Рендер недоступенъ — установите Chrome/Edge",
+        "none": "Рендер недоступен — установите Chrome/Edge",
     }[mode]

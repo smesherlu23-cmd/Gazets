@@ -1,7 +1,7 @@
-"""Экранъ 08 — экспортъ PNG и PDF.
+"""Экран 08 — экспорт PNG и PDF.
 
-Рендеръ идётъ локально въ фоновомъ потоке; по каждой готовой полосе обновляется
-прогрессъ. Слой состариванiя берётся изъ текущихъ настроекъ бумаги.
+Рендер идёт локально в фоновом потоке; по каждой готовой полосе обновляется
+прогресс. Слой состаривания берётся из текущих настроек бумаги.
 """
 
 from __future__ import annotations
@@ -48,7 +48,7 @@ class ExportScreen:
         if self.busy:
             return
         self.busy = True
-        self.status.value = "готовимъ рендеръ…"
+        self.status.value = "готовим рендер…"
         self.progress.value = None
         self.app.page.update()
 
@@ -77,14 +77,14 @@ class ExportScreen:
 
     def _on_progress(self, done: int, total: int, name: str) -> None:
         self.progress.value = done / max(total, 1)
-        self.status.value = f"{done} изъ {total} · {name}"
+        self.status.value = f"{done} из {total} · {name}"
         try:
             self.app.page.update()
         except Exception:
             pass
 
     async def _choose_directory(self, _event=None) -> None:
-        path = await self.app.file_picker().get_directory_path(dialog_title="Куда сохранить выпускъ")
+        path = await self.app.file_picker().get_directory_path(dialog_title="Куда сохранить выпуск")
         if path:
             self.settings.directory = pathlib.Path(path)
             self.app.rebuild()
@@ -107,9 +107,9 @@ class ExportScreen:
         left = ft.Column(
             [
                 c.panel_section(
-                    "Что выгружаемъ",
+                    "Что выгружаем",
                     c.segment(
-                        [("all", "Все полосы"), ("current", "Только текущую"), ("range", "Диапазонъ")],
+                        [("all", "Все полосы"), ("current", "Только текущую"), ("range", "Диапазон")],
                         settings.scope,
                         lambda value: self._set("scope", value),
                     ),
@@ -117,7 +117,7 @@ class ExportScreen:
                         [
                             ft.Row(
                                 [
-                                    c.stepper("съ", settings.range_from,
+                                    c.stepper("с", settings.range_from,
                                               lambda value: self._set("range_from", int(value)),
                                               minimum=1, maximum=total_pages, width=100),
                                     c.stepper("по", settings.range_to,
@@ -135,7 +135,7 @@ class ExportScreen:
                 *(
                     [
                         c.panel_section(
-                            "Разрешенiе",
+                            "Разрешение",
                             c.select(
                                 "",
                                 dpi_label(settings.dpi),
@@ -149,9 +149,9 @@ class ExportScreen:
                     if settings.fmt == "png"
                     else [
                         c.panel_section(
-                            "Листъ",
+                            "Лист",
                             t.hint(
-                                f"Форматъ выпуска — {app.project.page_format}, портретъ. "
+                                f"Формат выпуска — {app.project.page_format}, портрет. "
                                 "Меняется на экране сетки.",
                                 size=11,
                             ),
@@ -160,17 +160,17 @@ class ExportScreen:
                     ]
                 ),
                 c.panel_section(
-                    "Опцiи",
+                    "Опции",
                     c.checkbox(
-                        f"Включить эффектъ бумаги ({app.project.paper.intensity} %)",
+                        f"Включить эффект бумаги ({app.project.paper.intensity} %)",
                         settings.with_paper,
                         lambda value: self._set("with_paper", value),
                     ),
-                    c.checkbox("Метки реза и поля подъ печать", settings.crop_marks,
+                    c.checkbox("Метки реза и поля под печать", settings.crop_marks,
                                lambda value: self._set("crop_marks", value)),
                     *(
                         [
-                            c.checkbox("Склеить полосы въ одну картинку", settings.stitch,
+                            c.checkbox("Склеить полосы в одну картинку", settings.stitch,
                                        lambda value: self._set("stitch", value))
                         ]
                         if settings.fmt == "png"
@@ -224,7 +224,7 @@ class ExportScreen:
                 [
                     sheets,
                     t.text(
-                        f"{len(names)} файл{'ъ' if len(names) == 1 else 'а'} "
+                        f"{len(names)} файл{'' if len(names) == 1 else 'а'} "
                         f"{settings.fmt.upper()}",
                         size=13,
                         color=t.TEXT_PRIMARY,
@@ -246,10 +246,10 @@ class ExportScreen:
                         [
                             ft.Column(
                                 [
-                                    t.text("Экспортъ выпуска", size=18, color=t.TEXT_PRIMARY, weight="600"),
+                                    t.text("Экспорт выпуска", size=18, color=t.TEXT_PRIMARY, weight="600"),
                                     t.hint(
                                         f"{app.project.issue.title}, № {app.project.issue.number} · "
-                                        f"{total_pages} полосъ",
+                                        f"{total_pages} полос",
                                         size=12,
                                         color=t.TEXT_MUTED,
                                     ),
@@ -271,7 +271,7 @@ class ExportScreen:
                     ft.Row(
                         [
                             ft.Container(
-                                t.hint("Рендеръ идётъ локально, сеть не нужна.", size=11,
+                                t.hint("Рендер идёт локально, сеть не нужна.", size=11,
                                        color=t.TEXT_FAINTER),
                                 expand=True,
                             ),

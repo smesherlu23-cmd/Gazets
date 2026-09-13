@@ -1,26 +1,27 @@
-"""Экран 04 — шаблоны сетки полосы: шагъ 2 изъ 2 и смена сетки у готовой полосы."""
+"""Экран 04 — шаблоны сетки полосы: шаг 2 из 2 и смена сетки у готовой полосы."""
 
 from __future__ import annotations
 
 import flet as ft
 
+from .. import storage
 from ..presets import GRID_TEMPLATES, apply_template, new_project
 from . import common as c
 from . import theme as t
 from . import thumbs
 from .state import AppState
 
-# Схемы миниатюр: (подпись, строка, весъ)
+# Схемы миниатюр: (подпись, строка, вес)
 TEMPLATE_THUMBS = {
-    "front-main-side": [("ШАПКА", 0, 1), ("ГЛАВНАЯ", 1, 2), ("БОКЪ", 1, 1),
-                        ("ПОДВАЛЪ", 2, 1), ("ПОДВАЛЪ", 2, 1)],
+    "front-main-side": [("ШАПКА", 0, 1), ("ГЛАВНАЯ", 1, 2), ("БОК", 1, 1),
+                        ("ПОДВАЛ", 2, 1), ("ПОДВАЛ", 2, 1)],
     "front-three-columns": [("ШАПКА", 0, 1), ("КОЛОНКА", 1, 1), ("КОЛОНКА", 1, 1),
                             ("КОЛОНКА", 1, 1)],
-    "photo-lead": [("ШАПКА", 0, 1), ("ФОТО", 1, 1), ("ТЕКСТЪ", 2, 2), ("ВРЕЗКА", 2, 1)],
+    "photo-lead": [("ШАПКА", 0, 1), ("ФОТО", 1, 1), ("ТЕКСТ", 2, 2), ("ВРЕЗКА", 2, 1)],
     "vertical-masthead": [("ЛОГО", 1, 1), ("ГЛАВНАЯ", 1, 2), ("ВРЕЗКИ", 1, 1),
-                          ("ПОДВАЛЪ", 2, 2), ("ПОДВАЛЪ", 2, 1)],
-    "quadrants": [("ШАПКА", 0, 1), ("КВАДРАНТЪ", 1, 1), ("КВАДРАНТЪ", 1, 1),
-                  ("КВАДРАНТЪ", 2, 1), ("КВАДРАНТЪ", 2, 1)],
+                          ("ПОДВАЛ", 2, 2), ("ПОДВАЛ", 2, 1)],
+    "quadrants": [("ШАПКА", 0, 1), ("КВАДРАНТ", 1, 1), ("КВАДРАНТ", 1, 1),
+                  ("КВАДРАНТ", 2, 1), ("КВАДРАНТ", 2, 1)],
     "blank": [("ПУСТО", 1, 1)],
 }
 
@@ -72,7 +73,7 @@ def build(app: AppState) -> ft.Control:
     # ---------------------------------------------------------------- правая панель
     def set_format(value: str) -> None:
         project.page_format = value.split(",")[0].strip()
-        project.orientation = "portrait" if "портретъ" in value else "landscape"
+        project.orientation = "portrait" if "портрет" in value else "landscape"
         app.touch()
 
     def margin_field(index: int, label: str) -> ft.Control:
@@ -114,13 +115,14 @@ def build(app: AppState) -> ft.Control:
 
     def assemble(_event) -> None:
         if in_wizard:
-            project = new_project(
-                app.wizard.issue,
-                preset_id=app.wizard.preset_id,
-                template_id=app.wizard.template_id,
-                brand=app.wizard.brand,
+            publication = (
+                storage.publication(app.wizard.publication_id)
+                if app.wizard.publication_id
+                else None
             )
-            app.set_project(project)
+            app.set_project(
+                new_project(app.wizard.issue, publication, template_id=app.wizard.template_id)
+            )
             app.wizard.reset()
         app.navigate("layout")
         app.refresh_preview(immediate=True)
@@ -129,11 +131,11 @@ def build(app: AppState) -> ft.Control:
         content=ft.Column(
             [
                 c.panel_section(
-                    "Форматъ",
+                    "Формат",
                     c.select(
                         "",
-                        f"{project.page_format}, портретъ",
-                        [f"{name}, портретъ" for name in ("A3", "A4")],
+                        f"{project.page_format}, портрет",
+                        [f"{name}, портрет" for name in ("A3", "A4")],
                         set_format,
                     ),
                     spacing=8,
@@ -141,7 +143,7 @@ def build(app: AppState) -> ft.Control:
                 c.panel_section(
                     "Поля, мм",
                     ft.Row(
-                        [margin_field(0, "верхъ"), margin_field(1, "низъ"),
+                        [margin_field(0, "верх"), margin_field(1, "низ"),
                          margin_field(2, "лево"), margin_field(3, "право")],
                         spacing=8,
                     ),
@@ -150,7 +152,7 @@ def build(app: AppState) -> ft.Control:
                 c.panel_section(
                     "Модульная сетка",
                     c.stepper(
-                        "Колонокъ",
+                        "Колонок",
                         project.grid_columns,
                         lambda value: (setattr(project, "grid_columns", int(value)), app.touch())[0],
                         minimum=2,
@@ -158,7 +160,7 @@ def build(app: AppState) -> ft.Control:
                         width=110,
                     ),
                     c.stepper(
-                        "Средникъ, мм",
+                        "Средник, мм",
                         project.grid_gutter_mm,
                         lambda value: (setattr(project, "grid_gutter_mm", value), app.touch())[0],
                         step=0.5,
@@ -173,8 +175,8 @@ def build(app: AppState) -> ft.Control:
                 ft.Container(expand=True),
                 c.primary_button("Собрать полосу", assemble, width=268),
                 c.secondary_button(
-                    "Назадъ",
-                    lambda _: app.navigate("presets" if in_wizard else "layout"),
+                    "Назад",
+                    lambda _: app.navigate("issue" if in_wizard else "layout"),
                     width=268,
                 ),
             ],
@@ -195,9 +197,9 @@ def build(app: AppState) -> ft.Control:
                     [
                         ft.Column(
                             [
-                                t.text("Шаблонъ сетки полосы", size=24, color=t.TEXT_PRIMARY, weight="600"),
+                                t.text("Шаблон сетки полосы", size=24, color=t.TEXT_PRIMARY, weight="600"),
                                 t.hint(
-                                    "Стартовое деленiе полосы на блоки — границы потомъ тянутся мышью.",
+                                    "Стартовое деление полосы на блоки — границы потом тянутся мышью.",
                                     size=13,
                                     color=t.TEXT_MUTED,
                                 ),

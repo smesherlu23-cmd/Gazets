@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pathlib
 
-from pechatnya.presets import demo_project
+from tests.fixtures import sample_project
 from pechatnya.render.export import ExportSettings, dpi_label, planned_names, px_for_dpi, slugify
 
 
@@ -28,7 +28,7 @@ def test_scope_selects_pages() -> None:
 
 
 def test_file_names_follow_pattern() -> None:
-    project = demo_project()
+    project = sample_project()
 
     names = planned_names(project, ExportSettings(fmt="png", scope="all",
                                                   directory=pathlib.Path(".")))

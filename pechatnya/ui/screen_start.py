@@ -8,7 +8,6 @@ import pathlib
 import flet as ft
 
 from .. import storage
-from ..presets import demo_project
 from . import common as c
 from . import theme as t
 from . import thumbs
@@ -30,48 +29,50 @@ def _format_stamp(value: str) -> str:
 
 def build(app: AppState) -> ft.Control:
     recents = storage.recent_projects()
-    titles: list[str] = []
-    for entry in recents:
-        if entry.issue and entry.issue not in titles:
-            titles.append(entry.issue)
+    publications = storage.publications()
+    active_filter = app.start_filter
+    if active_filter:
+        recents = [entry for entry in recents if entry.publication_id == active_filter]
 
     # ---------------------------------------------------------------- левая панель
-    library_rows = [
-        ("Все выпуски", len(recents)),
-        ("Недавние", min(len(recents), 8)),
-        ("Автосохранения", len(list((storage.app_dir() / "autosave").glob("*.json")))),
-    ]
-    library = ft.Column(
-        [
-            t.caps("Библиотека / Library"),
-            *[
-                c.list_row(
-                    ft.Row(
-                        [
-                            t.text(name, size=13, color=t.TEXT_BODY if index == 0 else t.TEXT_SECONDARY),
-                            t.text(str(count), size=12, color=t.TEXT_MUTED),
-                        ],
-                        alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                    ),
-                    active=index == 0,
-                )
-                for index, (name, count) in enumerate(library_rows)
-            ],
-        ],
-        spacing=6,
-    )
-    title_rows: list[ft.Control] = [
-        c.list_row(t.text(name, size=12, color=t.TEXT_SECONDARY), height=28) for name in titles[:6]
-    ] or [t.hint("Сохранённыхъ изданiй пока нетъ")]
-    titles_column = ft.Column([t.caps("Издания / Titles"), *title_rows], spacing=6)
+    def filter_row(label: str, key: str, count: int) -> ft.Control:
+        return c.list_row(
+            ft.Row(
+                [
+                    t.text(label, size=12,
+                           color=t.TEXT_BODY if key == active_filter else t.TEXT_SECONDARY),
+                    t.text(str(count), size=12, color=t.TEXT_MUTED),
+                ],
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            ),
+            active=key == active_filter,
+            on_click=(lambda key: lambda _e: _set_filter(app, key))(key),
+            height=30,
+        )
+
+    all_recents = storage.recent_projects(99)
+    rows = [filter_row("Все выпуски", "", len(all_recents))]
+    for item in publications:
+        count = len([entry for entry in all_recents if entry.publication_id == item.id])
+        rows.append(filter_row(item.display_name, item.id, count))
+
     rail = c.rail(
         ft.Column(
             [
-                library,
-                ft.Container(height=10),
-                titles_column,
+                t.caps("Издания"),
+                ft.Column(rows, spacing=4),
+                ft.Container(
+                    content=t.text("Редактировать издания", size=12, color=t.TEXT_SECONDARY),
+                    height=32,
+                    alignment=ft.Alignment.CENTER,
+                    border=ft.Border.all(1, t.BORDER_STRONG),
+                    border_radius=t.RADIUS_CONTROL,
+                    on_click=lambda _e: app.open_publications("start"),
+                    ink=True,
+                ),
                 ft.Container(expand=True),
-                t.hint(f"Проекты лежат в\n{storage.documents_dir()}", size=11, color=t.TEXT_FAINTER),
+                t.hint(f"Проекты лежат в\n{storage.documents_dir()}", size=11,
+                       color=t.TEXT_FAINTER),
             ],
             spacing=12,
             expand=True,
@@ -97,7 +98,7 @@ def build(app: AppState) -> ft.Control:
             c.card(
                 ft.Column(
                     [
-                        thumbs.paper_thumb(height=190, logo=entry.issue.upper()[:14] or "ВЫПУСКЪ"),
+                        thumbs.paper_thumb(height=190, logo=entry.issue.upper()[:14] or "ВЫПУСК"),
                         t.text(entry.title or entry.issue, size=13, color=t.TEXT_PRIMARY, weight="500"),
                         t.hint(
                             f"№ {entry.number} · {entry.date} · {_format_stamp(entry.modified)}",
@@ -126,7 +127,7 @@ def build(app: AppState) -> ft.Control:
                         border_radius=99,
                         alignment=ft.Alignment.CENTER,
                     ),
-                    t.text("Новый выпускъ", size=13, color=t.TEXT_SECONDARY),
+                    t.text("Новый выпуск", size=13, color=t.TEXT_SECONDARY),
                 ],
                 spacing=10,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -154,14 +155,14 @@ def build(app: AppState) -> ft.Control:
     header = ft.Row(
         [
             ft.Container(t.caps("№", size=10, tracking=1.2), width=80),
-            ft.Container(t.caps("Выпускъ", size=10, tracking=1.2), expand=True),
+            ft.Container(t.caps("Выпуск", size=10, tracking=1.2), expand=True),
             ft.Container(t.caps("Дата", size=10, tracking=1.2), width=160),
-            ft.Container(t.caps("Полосъ", size=10, tracking=1.2), width=120),
-            ft.Container(t.caps("Измененъ", size=10, tracking=1.2), width=130),
+            ft.Container(t.caps("Полос", size=10, tracking=1.2), width=120),
+            ft.Container(t.caps("Изменен", size=10, tracking=1.2), width=130),
         ],
         spacing=0,
     )
-    rows: list[ft.Control] = [header]
+    rows: list[ft.Control] = [header] if recents else []
     for entry in recents[:8]:
         rows.append(ft.Container(height=1, bgcolor=t.BORDER_ROW))
         rows.append(
@@ -173,7 +174,9 @@ def build(app: AppState) -> ft.Control:
                         ),
                         ft.Container(t.text(entry.title or entry.issue, size=13), expand=True),
                         ft.Container(t.text(entry.date, size=13, color=t.TEXT_SECONDARY), width=160),
-                        ft.Container(t.text("—", size=13, color=t.TEXT_MUTED), width=120),
+                        ft.Container(
+                            t.text(str(entry.pages or "—"), size=13, color=t.TEXT_MUTED), width=120
+                        ),
                         ft.Container(
                             t.text(_format_stamp(entry.modified), size=13, color=t.TEXT_MUTED), width=130
                         ),
@@ -187,17 +190,12 @@ def build(app: AppState) -> ft.Control:
 
     async def open_file(_event) -> None:
         files = await app.file_picker().pick_files(
-            dialog_title="Открыть проектъ «Печатни»",
+            dialog_title="Открыть проект «Печатни»",
             allowed_extensions=["json"],
             initial_directory=str(storage.documents_dir()),
         )
         if files:
             app.open(pathlib.Path(files[0].path))
-
-    def open_demo(_event) -> None:
-        app.set_project(demo_project())
-        app.navigate("layout")
-        app.refresh_preview(immediate=True)
 
     content = ft.Container(
         content=ft.Column(
@@ -207,15 +205,20 @@ def build(app: AppState) -> ft.Control:
                         ft.Column(
                             [
                                 t.text("Проекты", size=26, color=t.TEXT_PRIMARY, weight="600"),
-                                t.hint("Последнее измененiе — сверху", size=13, color=t.TEXT_MUTED),
+                                t.hint(
+                                    "Последнее изменение — сверху"
+                                    if recents
+                                    else "Здесь появятся ваши выпуски",
+                                    size=13,
+                                    color=t.TEXT_MUTED,
+                                ),
                             ],
                             spacing=4,
                         ),
                         ft.Row(
                             [
-                                c.secondary_button("Демо-выпускъ", open_demo),
-                                c.secondary_button("Открыть файлъ…", open_file),
-                                c.primary_button("Новый выпускъ", start_new, icon=ft.Icons.ADD),
+                                c.secondary_button("Открыть файл…", open_file),
+                                c.primary_button("Новый выпуск", start_new, icon=ft.Icons.ADD),
                             ],
                             spacing=10,
                         ),
@@ -235,3 +238,8 @@ def build(app: AppState) -> ft.Control:
     )
 
     return ft.Row([rail, content], spacing=0, expand=True)
+
+
+def _set_filter(app: AppState, key: str) -> None:
+    app.start_filter = key
+    app.rebuild()

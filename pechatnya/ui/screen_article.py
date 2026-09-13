@@ -1,7 +1,7 @@
-"""Экранъ 06 — редакторъ статьи: тексты слева, живое превью блока справа.
+"""Экран 06 — редактор статьи: тексты слева, живое превью блока справа.
 
-Превью пересобирается по паузе въ наборе (debounce въ PreviewController), а не
-на каждый символъ, поэтому набирать можно спокойно.
+Превью пересобирается по паузе в наборе (debounce в PreviewController), а не
+на каждый символ, поэтому набирать можно спокойно.
 """
 
 from __future__ import annotations
@@ -31,6 +31,7 @@ class ArticleScreen:
         self.counter = ft.Text("", size=11, color=t.TEXT_MUTED, font_family=t.MONO)
         self.fit_line = ft.Row([], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
         self.body_field: ft.TextField | None = None
+        self.selection: tuple[int, int] | None = None
         app.add_preview_listener(self._on_preview)
 
     # ------------------------------------------------------------------ превью
@@ -47,7 +48,7 @@ class ArticleScreen:
         article = self.article
         if article is None:
             return
-        self.counter.value = f"{article.char_count} знаковъ · {article.word_count} словъ"
+        self.counter.value = f"{article.char_count} знаков · {article.word_count} слов"
         fit = self.app.article_fit(article.id)
         if fit is None:
             self.fit_line.controls = [t.hint("Статья не размещена на полосе", size=12)]
@@ -55,8 +56,8 @@ class ArticleScreen:
             self.fit_line.controls = [
                 c.dot(t.WARN),
                 t.text(
-                    f"Не помещается: {fit.overflow_chars} зн. — сократите текстъ "
-                    f"или включите «продолженiе на стр.»",
+                    f"Не помещается: {fit.overflow_chars} зн. — сократите текст "
+                    f"или включите «продолжение на стр.»",
                     size=12,
                     color=t.WARN,
                 ),
@@ -64,7 +65,7 @@ class ArticleScreen:
         else:
             self.fit_line.controls = [
                 c.dot(t.OK_BAR),
-                t.text(f"Помещается въ блокъ: {fit.percent:.0f} % высоты", size=12, color=t.OK_TEXT),
+                t.text(f"Помещается в блок: {fit.percent:.0f} % высоты", size=12, color=t.OK_TEXT),
             ]
 
     # ------------------------------------------------------------------- правка
@@ -81,20 +82,31 @@ class ArticleScreen:
 
         return handler
 
+    def _remember_selection(self, event) -> None:
+        selection = getattr(event.control, "selection", None)
+        if selection is None:
+            self.selection = None
+            return
+        start = min(selection.base_offset, selection.extent_offset)
+        end = max(selection.base_offset, selection.extent_offset)
+        self.selection = (start, end) if end > start else None
+
     def _wrap_selection(self, marker: str) -> None:
-        """Ж/К — оборачиваютъ выделенный фрагментъ, либо ставятъ пару маркеровъ."""
+        """Ж/К — оборачивают выделенный фрагмент разметкой."""
         field = self.body_field
         if field is None or self.article is None:
             return
         value = field.value or ""
-        start = getattr(field, "selection_start", None)
-        end = getattr(field, "selection_end", None)
-        if start is None or end is None or start == end:
-            new_value = f"{value}{marker}{marker}"
-        else:
-            new_value = value[:start] + marker + value[start:end] + marker + value[end:]
+        if self.selection is None:
+            return
+        start, end = self.selection
+        start, end = max(0, start), min(len(value), end)
+        if start >= end:
+            return
+        new_value = value[:start] + marker + value[start:end] + marker + value[end:]
         field.value = new_value
         self.article.body = new_value
+        self.selection = None
         field.update()
         self.app.touch()
 
@@ -109,7 +121,7 @@ class ArticleScreen:
 
     async def _pick_photo(self, _event=None) -> None:
         files = await self.app.file_picker().pick_files(
-            dialog_title="Иллюстрацiя къ статье",
+            dialog_title="Иллюстрация к статье",
             allowed_extensions=["png", "jpg", "jpeg", "webp", "bmp"],
         )
         if not files or self.article is None:
@@ -133,11 +145,13 @@ class ArticleScreen:
         toolbar = ft.Container(
             content=ft.Row(
                 [
-                    _tool_button("Ж", lambda _e: self._wrap_selection("**"), font="PT Serif Bold"),
-                    _tool_button("К", lambda _e: self._wrap_selection("*"), italic=True),
+                    _tool_button("Ж", lambda _e: self._wrap_selection("**"), font="PT Serif Bold",
+                                 tooltip="Выделите фрагмент и нажмите — станет полужирным"),
+                    _tool_button("К", lambda _e: self._wrap_selection("*"), italic=True,
+                                 tooltip="Выделите фрагмент и нажмите — станет курсивом"),
                     ft.Container(width=1, height=18, bgcolor=t.BORDER_BASE),
                     c.chip("Буквица", article.drop_cap, lambda _e: self._toggle_drop_cap(), height=26),
-                    c.chip("Подзаголовокъ", False, lambda _e: self._insert("\n\n## ПОДЗАГОЛОВОКЪ\n\n"),
+                    c.chip("Подзаголовок", False, lambda _e: self._insert("\n\n## ПОДЗАГОЛОВОК\n\n"),
                            height=26),
                     c.chip("Врезка-цитата", False, lambda _e: self._insert("\n\n> Цитата\n\n"), height=26),
                     c.chip("Вставить фото…", article.image is not None,
@@ -157,6 +171,7 @@ class ArticleScreen:
         self.body_field = ft.TextField(
             value=article.body,
             on_change=lambda event: self._edit("body")(event.control.value),
+            on_selection_change=self._remember_selection,
             multiline=True,
             min_lines=12,
             expand=True,
@@ -179,23 +194,32 @@ class ArticleScreen:
                 [
                     ft.Row(
                         [
-                            ft.Container(c.field("Рубрика", article.rubric, self._edit("rubric")),
-                                         expand=True),
-                            ft.Container(c.field("Авторъ", article.author, self._edit("author")),
-                                         expand=True),
                             ft.Container(
-                                c.field("Место и время", article.place_time, self._edit("place_time")),
+                                c.field("Рубрика", article.rubric, self._edit("rubric"),
+                                        hint="например: хроника происшествий"),
+                                expand=True,
+                            ),
+                            ft.Container(
+                                c.field("Автор", article.author, self._edit("author"),
+                                        hint="кто написал"),
+                                expand=True,
+                            ),
+                            ft.Container(
+                                c.field("Место и время", article.place_time,
+                                        self._edit("place_time"), hint="где и когда"),
                                 expand=True,
                             ),
                         ],
                         spacing=12,
                     ),
-                    c.field("Заголовокъ", article.title, self._edit("title"), height=40, text_size=17),
-                    c.field("Подзаголовокъ", article.subtitle, self._edit("subtitle")),
+                    c.field("Заголовок", article.title, self._edit("title"), height=40, text_size=17,
+                            hint="о чём материал"),
+                    c.field("Подзаголовок", article.subtitle, self._edit("subtitle"),
+                            hint="лид — одно-два предложения"),
                     ft.Row(
                         [
-                            t.text("Текстъ статьи", size=12, color=t.TEXT_SECONDARY, expand=True),
-                            t.hint("**жирный** · *курсивъ* · ## подзаголовокъ · > цитата", size=11,
+                            t.text("Текст статьи", size=12, color=t.TEXT_SECONDARY, expand=True),
+                            t.hint("**жирный** · *курсив* · ## подзаголовок · > цитата", size=11,
                                    color=t.TEXT_FAINTER),
                         ]
                     ),
@@ -203,8 +227,9 @@ class ArticleScreen:
                     ft.Row(
                         [
                             ft.Container(self.fit_line, expand=True),
-                            c.secondary_button("Отменить", lambda _e: app.navigate("layout")),
-                            c.primary_button("Применить къ полосе",
+                            c.ghost_button("Удалить статью", lambda _e: self._delete()),
+                            c.secondary_button("Закрыть", lambda _e: app.navigate("layout")),
+                            c.primary_button("Применить к полосе",
                                              lambda _e: self._apply()),
                         ],
                         spacing=12,
@@ -219,14 +244,54 @@ class ArticleScreen:
             expand=True,
         )
 
-        continuation = c.stepper(
-            "Продолженiе на стр.",
-            article.continued_on or 0,
-            self._set_continuation,
-            minimum=0,
-            maximum=64,
-            width=110,
+        pages = len(app.project.pages)
+        placed_on = app.project.page_of_article(article.id, part=0)
+        target = app.continuation_target or (
+            article.continued_on or min(pages, (placed_on or 0) + 2)
         )
+        continuation_controls: list[ft.Control] = []
+        if placed_on is None:
+            continuation_controls.append(
+                t.hint("Разместите статью на полосе, чтобы разделить её между полосами.", size=11)
+            )
+        else:
+            continuation_controls.append(
+                ft.Row(
+                    [
+                        c.stepper(
+                            "Продолжение на стр.",
+                            target,
+                            lambda value: setattr(app, "continuation_target", int(value)),
+                            minimum=1,
+                            maximum=max(1, pages),
+                            width=104,
+                        ),
+                    ],
+                    spacing=10,
+                )
+            )
+            continuation_controls.append(
+                c.secondary_button(
+                    "Перенести остаток",
+                    lambda _e: app.split_article(article.id, int(target) - 1),
+                    height=30,
+                )
+            )
+            if article.split_at is not None:
+                continuation_controls.append(
+                    t.hint(
+                        f"Остаток {len(article.part_text(1))} зн. стоит на стр. "
+                        f"{article.continued_on}",
+                        size=11,
+                        color=t.OK_TEXT,
+                    )
+                )
+                continuation_controls.append(
+                    c.ghost_button("Убрать перенос", lambda _e: app.drop_split(article.id))
+                )
+            if app.busy_note:
+                continuation_controls.append(t.hint(app.busy_note, size=11, color=t.ACCENT_TEXT))
+        continuation = ft.Column(continuation_controls, spacing=10)
 
         side = ft.Container(
             content=ft.Column(
@@ -234,8 +299,8 @@ class ArticleScreen:
                     self.preview,
                     continuation,
                     t.hint(
-                        "Превью пересобирается по паузе въ наборе. Если текстъ не влезаетъ, "
-                        "поставьте номеръ полосы — внизу блока появится строка «продолженiе на стр.».",
+                        "Превью пересобирается по паузе в наборе. Если текст не влезает, "
+                        "поставьте номер полосы — внизу блока появится строка «продолжение на стр.».",
                         size=11,
                         color=t.TEXT_FAINTER,
                     ),
@@ -261,19 +326,28 @@ class ArticleScreen:
         self.article.drop_cap = not self.article.drop_cap
         self.app.touch(rebuild=True)
 
-    def _set_continuation(self, value: float) -> None:
-        if self.article is None:
-            return
-        self.article.continued_on = int(value) or None
-        self.app.touch()
-
     def _apply(self) -> None:
         self.app.touch(immediate=True)
         self.app.navigate("layout")
 
+    def _delete(self) -> None:
+        """Убирает статью из выпуска целиком — и с полосы, и из списка."""
+        if self.article is None:
+            return
+        self.app.project.detach(self.article.id)
+        self.app.project.articles = [
+            item for item in self.app.project.articles if item.id != self.article.id
+        ]
+        self.app.editing_article_id = None
+        self.app.touch(immediate=True)
+        self.app.navigate("layout")
 
-def _tool_button(label: str, handler, font: str = t.UI, italic: bool = False) -> ft.Control:
+
+def _tool_button(
+    label: str, handler, font: str = t.UI, italic: bool = False, tooltip: str = ""
+) -> ft.Control:
     return ft.Container(
+        tooltip=tooltip or None,
         content=ft.Text(label, size=13, color=t.TEXT_SECONDARY, font_family=font, italic=italic),
         width=28,
         height=26,

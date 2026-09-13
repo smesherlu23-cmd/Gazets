@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from pechatnya.presets import demo_project
+from tests.fixtures import sample_project
 from pechatnya.render.engine import engine, find_browser
 from pechatnya.render.export import ExportSettings, export
 from pechatnya.render.html import RenderOptions, page_document
@@ -20,7 +20,7 @@ def render_engine():
 
 
 def test_png_render_has_sheet_size(tmp_path, render_engine) -> None:
-    document = page_document(demo_project(), 0, RenderOptions(show_paper=True))
+    document = page_document(sample_project(), 0, RenderOptions(show_paper=True))
 
     path = render_engine.render_png(document, tmp_path / "page.png")
 
@@ -31,7 +31,7 @@ def test_png_render_has_sheet_size(tmp_path, render_engine) -> None:
 
 
 def test_measure_reports_fit_per_block(render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
     document = page_document(project, 0, RenderOptions())
 
     metrics = {item.id: item for item in render_engine.measure(document)}
@@ -45,7 +45,7 @@ def test_measure_reports_fit_per_block(render_engine) -> None:
 
 
 def test_overflow_is_detected(render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
     project.articles[0].body *= 3
     document = page_document(project, 0, RenderOptions())
 
@@ -59,7 +59,7 @@ def test_overflow_is_detected(render_engine) -> None:
 
 
 def test_pdf_export_contains_all_pages(tmp_path, render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
 
     result = export(project, ExportSettings(fmt="pdf", scope="all", directory=tmp_path))
 
@@ -69,7 +69,7 @@ def test_pdf_export_contains_all_pages(tmp_path, render_engine) -> None:
 
 
 def test_png_export_names_and_dpi(tmp_path, render_engine) -> None:
-    project = demo_project()
+    project = sample_project()
 
     result = export(
         project, ExportSettings(fmt="png", scope="current", dpi=96, directory=tmp_path)
@@ -79,3 +79,36 @@ def test_png_export_names_and_dpi(tmp_path, render_engine) -> None:
     pillow = pytest.importorskip("PIL.Image")
     with pillow.open(result.files[0]) as image:
         assert image.size == (794, 1123)
+
+
+def test_split_point_is_picked_so_the_first_part_fits(render_engine) -> None:
+    """Подбор переноса: начало статьи должно влезать в блок, остаток — уезжать."""
+    from pechatnya.render.split import fit_split_point, measure_block
+
+    project = sample_project()
+    lead = project.articles[0]
+    lead.body = lead.body * 2  # заведомо не помещается
+    block = project.block_of(lead.id, part=0)
+
+    if not render_engine.can_measure:
+        pytest.skip("движок работает в режиме CLI — замер недоступен")
+
+    point = fit_split_point(project, lead.id, render_engine=render_engine)
+
+    assert point is not None and 0 < point < len(lead.body)
+    lead.split_at = point
+    assert measure_block(project, 0, block.id, None, render_engine) <= 100
+    assert lead.part_text(1).strip()  # остаток не пустой
+    # разрыв приходится на пробел — слово не разорвано
+    assert lead.body[point].isspace() or point == len(lead.body)
+
+
+def test_no_split_needed_for_short_article(render_engine) -> None:
+    from pechatnya.render.split import fit_split_point
+
+    project = sample_project()
+    short = project.articles[1]
+    if not render_engine.can_measure:
+        pytest.skip("движок работает в режиме CLI — замер недоступен")
+
+    assert fit_split_point(project, short.id, render_engine=render_engine) is None
