@@ -12,15 +12,18 @@ from typing import Callable
 
 from .models import (
     Block,
+    Frame,
     ImageRef,
     Issue,
     ModuleData,
     Page,
     Project,
     Publication,
-    Row,
     Style,
     Typography,
+    column,
+    leaf,
+    row,
 )
 
 # --------------------------------------------------------------------- пресеты
@@ -171,20 +174,46 @@ MODULE_LIBRARY: dict[str, Callable[[], ModuleData]] = {
     "rates": lambda: ModuleData(
         kind="rates", title="ЦЕНЫ И КУРСЫ", rows=[["", ""], ["", ""], ["", ""]], framed=False
     ),
+    "schedule": lambda: ModuleData(
+        kind="schedule", title="РАСПИСАНИЕ", rows=[["", ""], ["", ""], ["", ""]], framed=True
+    ),
+    "list": lambda: ModuleData(
+        kind="list", title="ПЕРЕЧЕНЬ", rows=[[""], [""], [""]], framed=False
+    ),
     "quote": lambda: ModuleData(kind="quote", title="", text="", attribution="", framed=False),
+    "fact": lambda: ModuleData(kind="fact", title="", text="", attribution="", framed=False),
     "obituary": lambda: ModuleData(kind="obituary", title="ПАМЯТИ", text="", framed=False),
     "photo": lambda: ModuleData(
         kind="photo", title="", text="", framed=False, image=ImageRef(caption="", height_px=120)
     ),
+    "free": lambda: ModuleData(kind="free", title="", text="", framed=False),
 }
 
 MODULE_TITLES = {
     "ad": "Объявление",
     "weather": "Погода",
-    "rates": "Курсы",
+    "rates": "Цены",
+    "schedule": "Расписание",
+    "list": "Перечень",
     "quote": "Цитата",
+    "fact": "Цифра дня",
     "obituary": "Некролог",
     "photo": "Снимок",
+    "free": "Свободный блок",
+}
+
+# Подсказка, что писать в модуле, — видна в панели блока.
+MODULE_HINTS = {
+    "ad": "текст объявления",
+    "weather": "погода на сутки",
+    "rates": "строки «товар — цена»",
+    "schedule": "строки «время — событие»",
+    "list": "пункты перечня, по одному в строке",
+    "quote": "цитата и кто сказал",
+    "fact": "крупное число и пояснение",
+    "obituary": "кто и когда",
+    "photo": "снимок и подпись",
+    "free": "заголовок и текст на ваше усмотрение",
 }
 
 
@@ -203,181 +232,176 @@ class GridTemplate:
     description: str
     kind: str  # front | inner | both
     blocks_count: int
-    build: Callable[[], list[Row]]
+    build: Callable[[], Frame]
 
 
 def _block(label: str, **kwargs) -> Block:
     return Block(label=label, kind=kwargs.pop("kind", "empty"), **kwargs)
 
 
-def _rows_main_side() -> list[Row]:
-    return [
-        Row(
-            weight=1.0,
-            blocks=[
-                _block("Главная статья", weight=1.0, columns=3),
-                _block(
-                    "Боковая колонка",
-                    fixed_width=196.0,
-                    columns=1,
-                    border_left=True,
-                    column_rules=False,
-                    align="left",
-                    drop_cap=False,
-                ),
-            ],
-        ),
-        Row(
-            weight=0.0,
-            fixed_height=132.0,
-            gap=13.0,
-            blocks=[
-                _block("Подвал — слева", columns=1, drop_cap=False, headline_scale=0.4),
-                _block("Подвал — в центре", columns=1, drop_cap=False, headline_scale=0.4),
-                _block("Подвал — справа", columns=1, drop_cap=False, headline_scale=0.4),
-            ],
-        ),
+def _side(label: str, width: float = 196.0, **kwargs) -> Frame:
+    """Узкая колонка врезок: своя ширина в пикселях, набор в одну колонку."""
+    block = _block(label, columns=1, column_rules=False, align="left", drop_cap=False,
+                   border_left=True, **kwargs)
+    return leaf(block, fixed=width)
+
+
+def _strip(*labels: str, height: float = 132.0, columns: int = 1) -> Frame:
+    """Нижняя лента: несколько коротких материалов через разделители."""
+    cells = [
+        leaf(_block(label, columns=columns, drop_cap=False, headline_scale=0.4, border_top=2.5))
+        for label in labels
     ]
+    return row(*cells, fixed=height, gap=13.0)
 
 
-def _rows_three_columns() -> list[Row]:
-    return [
-        Row(
-            weight=1.0,
-            blocks=[
-                _block("Левая колонка", columns=1, headline_scale=0.55),
-                _block("Средняя колонка", columns=1, headline_scale=0.7),
-                _block("Правая колонка", columns=1, headline_scale=0.55),
-            ],
+def _tree_main_side() -> Frame:
+    return column(
+        row(
+            leaf(_block("Главная статья", columns=3)),
+            _side("Боковая колонка"),
         ),
-        Row(
-            weight=0.0,
-            fixed_height=120.0,
-            blocks=[_block("Нижняя лента", columns=3, drop_cap=False, headline_scale=0.45, border_top=2.5)],
-        ),
-    ]
+        _strip("Подвал — слева", "Подвал — в центре", "Подвал — справа"),
+    )
 
 
-def _rows_photo_lead() -> list[Row]:
-    return [
-        Row(
-            weight=0.0,
-            fixed_height=300.0,
-            blocks=[_block("Фото-гвоздь", columns=2, headline_scale=1.0)],
+def _tree_three_columns() -> Frame:
+    return column(
+        row(
+            leaf(_block("Левая колонка", columns=1, headline_scale=0.55)),
+            leaf(_block("Средняя колонка", columns=1, headline_scale=0.7)),
+            leaf(_block("Правая колонка", columns=1, headline_scale=0.55)),
         ),
-        Row(
-            weight=1.0,
-            blocks=[
-                _block("Слева", columns=2, headline_scale=0.6),
-                _block("Справа", fixed_width=230.0, columns=1, border_left=True, headline_scale=0.5),
-            ],
-        ),
-        Row(
-            weight=0.0,
-            fixed_height=110.0,
-            blocks=[_block("Подвал", columns=3, drop_cap=False, headline_scale=0.42, border_top=2.5)],
-        ),
-    ]
+        _strip("Нижняя лента", height=120.0, columns=3),
+    )
 
 
-def _rows_vertical_masthead() -> list[Row]:
-    return [
-        Row(
-            weight=1.0,
-            blocks=[
-                _block("Боковая шапка", fixed_width=150.0, columns=1, drop_cap=False, align="left"),
-                _block("Главная статья", weight=1.0, columns=2),
-                _block("Врезки", fixed_width=170.0, columns=1, border_left=True, drop_cap=False, align="left"),
-            ],
+def _tree_photo_lead() -> Frame:
+    return column(
+        leaf(_block("Фото-гвоздь", columns=2), fixed=300.0),
+        row(
+            leaf(_block("Слева", columns=2, headline_scale=0.6)),
+            _side("Справа", width=230.0, headline_scale=0.5),
         ),
-        Row(
-            weight=0.0,
-            fixed_height=140.0,
-            blocks=[
-                _block("Подвал — слева", columns=2, drop_cap=False, headline_scale=0.45, border_top=2.5),
-                _block("Подвал — справа", columns=1, drop_cap=False, headline_scale=0.45, border_top=2.5),
-            ],
-        ),
-    ]
+        _strip("Подвал", height=110.0, columns=3),
+    )
 
 
-def _rows_quadrants() -> list[Row]:
-    return [
-        Row(
-            weight=1.0,
-            blocks=[
-                _block("Верхний левый", columns=2, headline_scale=0.7),
-                _block("Верхний правый", columns=2, headline_scale=0.7),
-            ],
+def _tree_vertical_masthead() -> Frame:
+    return column(
+        row(
+            leaf(
+                _block("Боковая шапка", columns=1, drop_cap=False, align="left"),
+                fixed=150.0,
+            ),
+            leaf(_block("Главная статья", columns=2)),
+            _side("Врезки", width=170.0),
         ),
-        Row(
-            weight=1.0,
-            blocks=[
-                _block("Нижний левый", columns=2, headline_scale=0.6),
-                _block("Нижний правый", columns=2, headline_scale=0.6),
-            ],
-        ),
-        Row(
-            weight=0.0,
-            fixed_height=104.0,
-            blocks=[_block("Лента внизу", columns=3, drop_cap=False, headline_scale=0.4, border_top=2.5)],
-        ),
-    ]
+        _strip("Подвал — слева", "Подвал — справа", height=140.0, columns=2),
+    )
 
 
-def _rows_blank() -> list[Row]:
-    return [Row(weight=1.0, blocks=[_block("Пустой блок", columns=3)])]
+def _tree_two_leads() -> Frame:
+    """Два гвоздя рядом — для номеров, где новостей две, а не одна."""
+    return column(
+        row(
+            leaf(_block("Первый гвоздь", columns=2, headline_scale=0.85)),
+            leaf(_block("Второй гвоздь", columns=2, headline_scale=0.85)),
+            _side("Объявления", width=168.0),
+        ),
+        _strip("Подвал — слева", "Подвал — справа", height=150.0, columns=2),
+    )
+
+
+def _tree_poster() -> Frame:
+    """Афиша: один материал во всю полосу и лента внизу."""
+    return column(
+        leaf(_block("Афиша", columns=1, headline_scale=1.6, align="center", drop_cap=False)),
+        _strip("Подробности", height=150.0, columns=3),
+    )
+
+
+def _tree_quadrants() -> Frame:
+    return column(
+        row(
+            leaf(_block("Верхний левый", columns=2, headline_scale=0.7)),
+            leaf(_block("Верхний правый", columns=2, headline_scale=0.7)),
+        ),
+        row(
+            leaf(_block("Нижний левый", columns=2, headline_scale=0.6)),
+            leaf(_block("Нижний правый", columns=2, headline_scale=0.6)),
+        ),
+        _strip("Лента внизу", height=104.0, columns=3),
+    )
+
+
+def _tree_inner_two() -> Frame:
+    """Две широкие колонки — спокойная внутренняя полоса."""
+    return column(
+        row(
+            leaf(_block("Левый материал", columns=2, headline_scale=0.75)),
+            leaf(_block("Правый материал", columns=2, headline_scale=0.75)),
+        ),
+        _strip("Подвал", height=130.0, columns=3),
+    )
+
+
+def _tree_gallery() -> Frame:
+    """Полоса снимков: шесть клеток под фото с подписями."""
+    def cell(label: str) -> Frame:
+        return leaf(_block(label, columns=1, drop_cap=False, headline_scale=0.4))
+
+    return column(
+        row(cell("Снимок 1"), cell("Снимок 2"), cell("Снимок 3")),
+        row(cell("Снимок 4"), cell("Снимок 5"), cell("Снимок 6")),
+    )
+
+
+def _tree_letters() -> Frame:
+    """Письма и ответы: узкая колонка писем, широкий разбор, низ на два."""
+    return column(
+        row(
+            _side("Письма", width=210.0),
+            leaf(_block("Разбор", columns=2)),
+        ),
+        _strip("Ответ редакции", "Короткой строкой", height=150.0, columns=2),
+    )
+
+
+def _tree_blank() -> Frame:
+    return column(leaf(_block("Пустой блок", columns=3)))
 
 
 GRID_TEMPLATES: list[GridTemplate] = [
-    GridTemplate(
-        "front-main-side",
-        "Шапка + главная и боковая",
-        "Гвоздь номера на три колонки и узкая колонка врезок.",
-        "front",
-        5,
-        _rows_main_side,
-    ),
-    GridTemplate(
-        "front-three-columns",
-        "Шапка + три колонки",
-        "Три равные колонки и нижняя лента — самый ходовой макет.",
-        "front",
-        4,
-        _rows_three_columns,
-    ),
-    GridTemplate(
-        "photo-lead",
-        "Фото-гвоздь",
-        "Крупный снимок вверху, под ним два материала и подвал.",
-        "both",
-        4,
-        _rows_photo_lead,
-    ),
-    GridTemplate(
-        "vertical-masthead",
-        "Вертикальная шапка",
-        "Логотип сбоку, набор в две колонки, врезки справа.",
-        "front",
-        5,
-        _rows_vertical_masthead,
-    ),
-    GridTemplate(
-        "quadrants",
-        "Четыре квадранта",
-        "Четыре равных материала и лента внизу — для внутренних полос.",
-        "inner",
-        5,
-        _rows_quadrants,
-    ),
-    GridTemplate(
-        "blank",
-        "Пустая сетка",
-        "Один блок на всю полосу — делите границами вручную.",
-        "both",
-        1,
-        _rows_blank,
-    ),
+    GridTemplate("front-main-side", "Шапка + главная и боковая",
+                 "Гвоздь номера на три колонки и узкая колонка врезок.", "front", 5,
+                 _tree_main_side),
+    GridTemplate("front-three-columns", "Шапка + три колонки",
+                 "Три равные колонки и нижняя лента — самый ходовой макет.", "front", 4,
+                 _tree_three_columns),
+    GridTemplate("front-two-leads", "Два гвоздя",
+                 "Две главные новости рядом и колонка объявлений.", "front", 6, _tree_two_leads),
+    GridTemplate("photo-lead", "Фото-гвоздь",
+                 "Крупный снимок вверху, под ним два материала и подвал.", "both", 6,
+                 _tree_photo_lead),
+    GridTemplate("vertical-masthead", "Вертикальная шапка",
+                 "Логотип сбоку, набор в две колонки, врезки справа.", "front", 5,
+                 _tree_vertical_masthead),
+    GridTemplate("poster", "Афиша",
+                 "Один материал во всю полосу — объявление, призыв, некролог.", "both", 4,
+                 _tree_poster),
+    GridTemplate("quadrants", "Четыре квадранта",
+                 "Четыре равных материала и лента внизу.", "inner", 5, _tree_quadrants),
+    GridTemplate("inner-two-columns", "Две широкие колонки",
+                 "Спокойная внутренняя полоса: два материала и подвал.", "inner", 5,
+                 _tree_inner_two),
+    GridTemplate("gallery", "Полоса снимков",
+                 "Шесть клеток под фотографии с подписями.", "inner", 6, _tree_gallery),
+    GridTemplate("letters", "Письма и разбор",
+                 "Узкая колонка писем, широкий разбор, низ на два материала.", "inner", 5,
+                 _tree_letters),
+    GridTemplate("blank", "Пустая сетка",
+                 "Один блок на всю полосу — делите его сами.", "both", 1, _tree_blank),
 ]
 
 TEMPLATES_BY_ID = {template.id: template for template in GRID_TEMPLATES}
@@ -389,7 +413,7 @@ def build_page(template_id: str, kind: str = "front") -> Page:
         kind=kind,
         template_id=template.id,
         show_masthead=(kind == "front"),
-        rows=template.build(),
+        root=template.build(),
     )
 
 
@@ -397,7 +421,7 @@ def apply_template(page: Page, template_id: str) -> None:
     """Меняет сетку полосы, стараясь сохранить уже размещённые статьи."""
     placed = [block.article_id for block in page.blocks() if block.article_id]
     modules = [block.modules for block in page.blocks() if block.modules]
-    page.rows = TEMPLATES_BY_ID.get(template_id, GRID_TEMPLATES[0]).build()
+    page.root = TEMPLATES_BY_ID.get(template_id, GRID_TEMPLATES[0]).build()
     page.template_id = template_id
     blocks = list(page.blocks())
     for block, article_id in zip(blocks, placed):

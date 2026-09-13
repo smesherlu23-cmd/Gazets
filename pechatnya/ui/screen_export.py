@@ -138,8 +138,8 @@ class ExportScreen:
                             "Разрешение",
                             c.select(
                                 "",
-                                dpi_label(settings.dpi),
-                                [dpi_label(value) for value in DPI_CHOICES],
+                                dpi_label(settings.dpi, app.project.sheet_px()),
+                                [dpi_label(value, app.project.sheet_px()) for value in DPI_CHOICES],
                                 lambda value: self._set("dpi", int(value.split()[0])),
                             ),
                             t.hint("96 / 150 / 300 / 600 dpi. Для чата достаточно 150.", size=11),
@@ -151,8 +151,10 @@ class ExportScreen:
                         c.panel_section(
                             "Лист",
                             t.hint(
-                                f"Формат выпуска — {app.project.page_format}, портрет. "
-                                "Меняется на экране сетки.",
+                                f"Лист — {app.project.page_format}, "
+                                f"{'портрет' if app.project.orientation == 'portrait' else 'альбом'}"
+                                f" ({app.project.sheet_mm()[0]:.0f}×{app.project.sheet_mm()[1]:.0f} мм). "
+                                "Меняется на экране сетки полосы.",
                                 size=11,
                             ),
                             spacing=8,

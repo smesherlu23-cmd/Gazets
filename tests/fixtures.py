@@ -98,11 +98,12 @@ def sample_project() -> Project:
     project.articles = [lead, *footer]
 
     front = project.pages[0]
-    project.assign(lead.id, front.rows[0].blocks[0].id)
-    for article, block in zip(footer, front.rows[1].blocks):
+    blocks = list(front.blocks())  # главная, боковая, три подвала
+    project.assign(lead.id, blocks[0].id)
+    for article, block in zip(footer, blocks[2:]):
         project.assign(article.id, block.id)
 
-    sidebar = front.rows[0].blocks[1]
+    sidebar = blocks[1]
     sidebar.kind = "module"
     sidebar.label = "Боковая колонка"
     weather = make_module("weather")

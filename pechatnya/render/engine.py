@@ -72,6 +72,14 @@ MEASURE_JS = """
   const sheet = document.getElementById('sheet');
   const base = sheet.getBoundingClientRect();
   const blocks = [];
+  document.querySelectorAll('[data-frame]').forEach(node => {
+    const rect = node.getBoundingClientRect();
+    blocks.push({
+      id: node.getAttribute('data-frame'), kind: 'frame',
+      x: rect.left - base.left, y: rect.top - base.top,
+      width: rect.width, height: rect.height, percent: 0, overflow: 0
+    });
+  });
   document.querySelectorAll('[data-block]').forEach(node => {
     const rect = node.getBoundingClientRect();
     const fit = node.querySelector('[data-fit]');
@@ -84,7 +92,7 @@ MEASURE_JS = """
       }
     }
     blocks.push({
-      id: node.getAttribute('data-block'),
+      id: node.getAttribute('data-block'), kind: 'block',
       x: rect.left - base.left, y: rect.top - base.top,
       width: rect.width, height: rect.height,
       percent: percent, overflow: overflow
@@ -122,6 +130,7 @@ class BlockMetrics:
     height: float
     percent: float
     overflow: int
+    kind: str = "block"  # block — лист с содержимым, frame — узел сетки
 
 
 def find_browser() -> Optional[str]:
@@ -267,27 +276,47 @@ class ChromiumEngine:
         self._worker = None
 
     # ----------------------------------------------------------------- рендеринг
-    def render_png(self, document: str, path: pathlib.Path, scale: float = 1.0) -> pathlib.Path:
-        """Снимок одной полосы. ``scale`` = dpi / 96."""
-        return self._submit(lambda: self._render_png_impl(document, path, scale))
+    def render_png(
+        self,
+        document: str,
+        path: pathlib.Path,
+        scale: float = 1.0,
+        size: Optional[tuple[int, int]] = None,
+    ) -> pathlib.Path:
+        """Снимок одной полосы. ``scale`` = dpi / 96, ``size`` — размер листа в px."""
+        return self._submit(lambda: self._render_png_impl(document, path, scale, size))
 
-    def _render_png_impl(self, document: str, path: pathlib.Path, scale: float) -> pathlib.Path:
+    def _render_png_impl(
+        self,
+        document: str,
+        path: pathlib.Path,
+        scale: float,
+        size: Optional[tuple[int, int]] = None,
+    ) -> pathlib.Path:
+        width, height = size or (SHEET_WIDTH, SHEET_HEIGHT)
         mode = self._start_impl()
         if mode == "playwright":
-            return self._png_playwright(document, path, scale)
+            return self._png_playwright(document, path, scale, width, height)
         if mode == "cli":
-            return self._png_cli(document, path, scale)
+            return self._png_cli(document, path, scale, width, height)
         raise RenderError(
             "Не найден движок рендера. Установите Google Chrome, Microsoft Edge или "
             "выполните «playwright install chromium»."
         )
 
-    def _png_playwright(self, document: str, path: pathlib.Path, scale: float) -> pathlib.Path:
+    def _png_playwright(
+        self,
+        document: str,
+        path: pathlib.Path,
+        scale: float,
+        width: int = SHEET_WIDTH,
+        height: int = SHEET_HEIGHT,
+    ) -> pathlib.Path:
         assert self._page is not None
         if abs(scale - 1.0) > 1e-6:
             # deviceScaleFactor задаётся только при создании страницы
             page = self._browser.new_page(  # type: ignore[union-attr]
-                viewport={"width": SHEET_WIDTH, "height": SHEET_HEIGHT},
+                viewport={"width": width, "height": height},
                 device_scale_factor=scale,
             )
             try:
@@ -296,6 +325,7 @@ class ChromiumEngine:
             finally:
                 page.close()
             return path
+        self._page.set_viewport_size({"width": width, "height": height})
         self._page.set_content(document, wait_until="load")
         self._page.locator("#sheet").screenshot(path=str(path))
         return path
@@ -321,8 +351,15 @@ class ChromiumEngine:
             if result.returncode != 0:
                 raise RenderError(result.stderr.strip()[:400] or "браузер вернул ошибку")
 
-    def _png_cli(self, document: str, path: pathlib.Path, scale: float) -> pathlib.Path:
-        width, height = int(SHEET_WIDTH * scale), int(SHEET_HEIGHT * scale)
+    def _png_cli(
+        self,
+        document: str,
+        path: pathlib.Path,
+        scale: float,
+        sheet_width: int = SHEET_WIDTH,
+        sheet_height: int = SHEET_HEIGHT,
+    ) -> pathlib.Path:
+        width, height = int(sheet_width * scale), int(sheet_height * scale)
         self._cli_run(
             [f"--screenshot={path}", f"--window-size={width},{height}",
              f"--force-device-scale-factor={scale}"],
@@ -332,19 +369,21 @@ class ChromiumEngine:
             raise RenderError("браузер не создал файл снимка")
         return path
 
-    def render_pdf(self, document: str, path: pathlib.Path, paper: str = "A4") -> pathlib.Path:
-        """PDF выпуска. ``paper`` — физический формат листа (A4 или A3)."""
-        return self._submit(lambda: self._render_pdf_impl(document, path, paper))
+    def render_pdf(
+        self, document: str, path: pathlib.Path, size_mm: Optional[tuple[float, float]] = None
+    ) -> pathlib.Path:
+        """PDF выпуска. ``size_mm`` — физический размер листа."""
+        return self._submit(lambda: self._render_pdf_impl(document, path, size_mm))
 
-    def _render_pdf_impl(self, document: str, path: pathlib.Path, paper: str) -> pathlib.Path:
+    def _render_pdf_impl(
+        self, document: str, path: pathlib.Path, size_mm: Optional[tuple[float, float]]
+    ) -> pathlib.Path:
         mode = self._start_impl()
-        width_in = SHEET_WIDTH / 96
-        height_in = SHEET_HEIGHT / 96
+        if size_mm:
+            width_in, height_in = size_mm[0] / 25.4, size_mm[1] / 25.4
+        else:
+            width_in, height_in = SHEET_WIDTH / 96, SHEET_HEIGHT / 96
         scale = 1.0
-        if paper.upper() == "A3":
-            scale = 1.414
-            width_in *= scale
-            height_in *= scale
         if mode == "playwright":
             page = self._browser.new_page()  # type: ignore[union-attr]
             try:
@@ -381,19 +420,28 @@ class ChromiumEngine:
         return [BlockMetrics(**item) for item in raw]
 
     def render_and_measure(
-        self, document: str, path: pathlib.Path, scale: float = 1.0
+        self,
+        document: str,
+        path: pathlib.Path,
+        scale: float = 1.0,
+        size: Optional[tuple[int, int]] = None,
     ) -> tuple[pathlib.Path, list[BlockMetrics]]:
         """Один проход: и картинка превью, и метрики — чтобы не грузить страницу дважды."""
-        return self._submit(lambda: self._render_and_measure_impl(document, path, scale))
+        return self._submit(lambda: self._render_and_measure_impl(document, path, scale, size))
 
     def _render_and_measure_impl(
-        self, document: str, path: pathlib.Path, scale: float
+        self,
+        document: str,
+        path: pathlib.Path,
+        scale: float,
+        size: Optional[tuple[int, int]] = None,
     ) -> tuple[pathlib.Path, list[BlockMetrics]]:
+        width, height = size or (SHEET_WIDTH, SHEET_HEIGHT)
         mode = self._start_impl()
         if mode != "playwright":
-            return self._render_png_impl(document, path, scale), []
+            return self._render_png_impl(document, path, scale, (width, height)), []
         assert self._page is not None
-        self._page.set_viewport_size({"width": SHEET_WIDTH, "height": SHEET_HEIGHT})
+        self._page.set_viewport_size({"width": width, "height": height})
         self._page.set_content(document, wait_until="load")
         metrics = [BlockMetrics(**item) for item in self._page.evaluate(MEASURE_JS)]
         self._page.locator("#sheet").screenshot(path=str(path))

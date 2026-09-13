@@ -1,11 +1,14 @@
 """Модель данных выпуска: бренд, издание, полосы, блоки, статьи, оформление.
 
 Вся структура соответствует разделу «State Management» из README-хендофа:
-``brand`` → ``issue`` → ``pages[] → rows[] → blocks[]`` плюс сквозной список
-``articles[]``, настройки типографики, бумаги и стиля. Геометрия полосы описана
-не абсолютными координатами, а весами строк и блоков: так «перетаскивание
-границ» из ТЗ сводится к изменению одного числа и не ломает вёрстку при смене
-формата листа.
+``brand`` → ``issue`` → ``pages[] → root (дерево Frame) → blocks[]`` плюс
+сквозной список ``articles[]``, настройки типографики, бумаги и стиля.
+
+Геометрия полосы — дерево: узел либо делит место между детьми (в ряд или
+в колонку), либо несёт блок. Размер задаётся весом (доля свободного места) или
+фиксированной величиной в пикселях. Отсюда и деление блока, и удаление, и
+перетаскивание границ — всё это правка одного-двух чисел, не ломающая вёрстку
+при смене формата листа.
 """
 
 from __future__ import annotations
@@ -19,13 +22,24 @@ from .serde import from_dict, to_dict
 
 PROJECT_FORMAT_VERSION = 1
 
-# Лист в дизайн-пикселях (96 dpi). Все метрики полосы из README заданы в них.
+# Базовый лист в дизайн-пикселях (96 dpi) — A4, под него подобраны метрики набора.
 SHEET_WIDTH = 794
 SHEET_HEIGHT = 1123
 MARGIN_V = 34
 MARGIN_H = 38
 
 PT_TO_PX = 96 / 72
+MM_TO_PX = 96 / 25.4
+
+# Форматы листа в миллиметрах (портрет).
+PAGE_FORMATS: dict[str, tuple[float, float]] = {
+    "A3": (297.0, 420.0),
+    "A4": (210.0, 297.0),
+    "A5": (148.0, 210.0),
+    "Таблоид": (289.0, 380.0),
+    "Бродлист": (305.0, 560.0),
+    "Листовка": (148.0, 148.0),
+}
 
 
 def new_id(prefix: str) -> str:
@@ -196,16 +210,19 @@ class Block:
     id: str = field(default_factory=lambda: new_id("blk"))
     kind: str = "article"  # article | module | photo | empty
     label: str = "Блок"
-    weight: float = 1.0
-    fixed_width: Optional[float] = None  # px, для узких боковых колонок
     columns: int = 3
     column_rules: bool = True
     hyphens: bool = False
     align: str = "justify"  # left | justify | center
     drop_cap: bool = True
     headline_scale: float = 1.0
+    body_scale: float = 1.0  # кегль текста в блоке относительно издания
+    column_gap: float = 14.0
     border_left: bool = False
     border_top: float = 0.0
+    frame: str = "none"  # none | hairline | double | bold
+    tint: bool = False  # плашка под блоком
+    padding: float = 0.0
     article_id: Optional[str] = None
     article_part: int = 0  # 1 — блок с «продолжением» статьи
     modules: list[ModuleData] = field(default_factory=list)
@@ -216,32 +233,185 @@ class Block:
 
 
 @dataclass
-class Row:
-    """Горизонтальная зона полосы. Высота — доля от свободного места."""
+class Frame:
+    """Узел сетки полосы: либо контейнер, либо блок.
 
-    id: str = field(default_factory=lambda: new_id("row"))
+    ``direction`` пустой — это лист с блоком; ``row`` — дети стоят в ряд,
+    ``column`` — друг под другом. Дерево даёт то, чего не давал плоский список
+    строк: любой блок делится в любую сторону и удаляется, а соседи занимают
+    освободившееся место.
+    """
+
+    id: str = field(default_factory=lambda: new_id("frm"))
+    direction: str = ""  # "" | row | column
     weight: float = 1.0
-    fixed_height: Optional[float] = None
-    gap: float = 16.0
-    blocks: list[Block] = field(default_factory=list)
+    fixed: Optional[float] = None  # px: ширина в ряду, высота в колонке
+    gap: float = 14.0
+    children: list["Frame"] = field(default_factory=list)
+    block: Optional[Block] = None
+
+    @property
+    def is_leaf(self) -> bool:
+        return not self.direction
+
+    def leaves(self) -> Iterator["Frame"]:
+        if self.is_leaf:
+            if self.block is not None:
+                yield self
+            return
+        for child in self.children:
+            yield from child.leaves()
+
+    def walk(self) -> Iterator["Frame"]:
+        yield self
+        for child in self.children:
+            yield from child.walk()
+
+    def find(self, frame_id: str) -> Optional["Frame"]:
+        return next((frame for frame in self.walk() if frame.id == frame_id), None)
+
+    def parent_of(self, frame_id: str) -> Optional["Frame"]:
+        for frame in self.walk():
+            if any(child.id == frame_id for child in frame.children):
+                return frame
+        return None
+
+    def leaf_of_block(self, block_id: str) -> Optional["Frame"]:
+        return next(
+            (frame for frame in self.leaves() if frame.block and frame.block.id == block_id), None
+        )
+
+
+def leaf(block: Block, weight: float = 1.0, fixed: Optional[float] = None) -> Frame:
+    return Frame(block=block, weight=weight, fixed=fixed)
+
+
+def row(*children: Frame, weight: float = 1.0, fixed: Optional[float] = None,
+        gap: float = 14.0) -> Frame:
+    return Frame(direction="row", children=list(children), weight=weight, fixed=fixed, gap=gap)
+
+
+def column(*children: Frame, weight: float = 1.0, fixed: Optional[float] = None,
+           gap: float = 12.0) -> Frame:
+    return Frame(direction="column", children=list(children), weight=weight, fixed=fixed, gap=gap)
 
 
 @dataclass
 class Page:
-    """Полоса выпуска."""
+    """Полоса выпуска: шапка, дерево блоков, колонцифра."""
 
     id: str = field(default_factory=lambda: new_id("pg"))
     kind: str = "front"  # front | inner
     template_id: str = "front-main-side"
     show_masthead: bool = True
-    rows: list[Row] = field(default_factory=list)
+    root: Frame = field(default_factory=lambda: column(leaf(Block(label="Блок"))))
+
+    # ------------------------------------------------------------- доступ
+    def frames(self) -> Iterator[Frame]:
+        return self.root.walk()
+
+    def leaves(self) -> Iterator[Frame]:
+        return self.root.leaves()
 
     def blocks(self) -> Iterator[Block]:
-        for row in self.rows:
-            yield from row.blocks
+        for frame in self.root.leaves():
+            if frame.block is not None:
+                yield frame.block
 
     def find_block(self, block_id: str) -> Optional[Block]:
-        return next((block for block in self.blocks() if block.id == block_id), None)
+        frame = self.root.leaf_of_block(block_id)
+        return frame.block if frame else None
+
+    # ------------------------------------------------------- перестройка
+    def split_block(self, block_id: str, direction: str) -> Optional[Block]:
+        """Делит блок пополам: рядом появляется пустой блок."""
+        frame = self.root.leaf_of_block(block_id)
+        if frame is None or frame.block is None:
+            return None
+        fresh = Block(
+            label="Новый блок",
+            columns=1 if direction == "row" else frame.block.columns,
+            drop_cap=False,
+            headline_scale=frame.block.headline_scale,
+        )
+        parent = self.root.parent_of(frame.id)
+        if parent is not None and parent.direction == direction:
+            index = parent.children.index(frame)
+            if frame.fixed is not None:
+                frame.fixed = max(60.0, frame.fixed / 2)
+                parent.children.insert(index + 1, leaf(fresh, fixed=frame.fixed))
+            else:
+                frame.weight = max(0.1, frame.weight / 2)
+                parent.children.insert(index + 1, leaf(fresh, weight=frame.weight))
+        else:
+            # лист превращается в контейнер с двумя блоками
+            moved = leaf(frame.block)
+            frame.block = None
+            frame.direction = direction
+            frame.children = [moved, leaf(fresh)]
+        return fresh
+
+    def remove_block(self, block_id: str) -> bool:
+        """Убирает блок; соседи занимают его место. Последний блок не удаляем."""
+        frame = self.root.leaf_of_block(block_id)
+        if frame is None:
+            return False
+        parent = self.root.parent_of(frame.id)
+        if parent is None or len(list(self.leaves())) <= 1:
+            return False
+        parent.children.remove(frame)
+        self._collapse(parent)
+        return True
+
+    def _collapse(self, parent: Frame) -> None:
+        """Контейнер с одним ребёнком схлопывается — дерево не зарастает."""
+        while len(parent.children) == 1:
+            only = parent.children[0]
+            parent.direction = only.direction
+            parent.children = only.children
+            parent.block = only.block
+            parent.gap = only.gap
+            if parent.is_leaf:
+                return
+        for child in list(parent.children):
+            if not child.is_leaf and not child.children:
+                parent.children.remove(child)
+
+    def move_block(self, block_id: str, delta: int) -> bool:
+        """Меняет блок местами с соседом внутри контейнера."""
+        frame = self.root.leaf_of_block(block_id)
+        if frame is None:
+            return False
+        parent = self.root.parent_of(frame.id)
+        if parent is None:
+            return False
+        index = parent.children.index(frame)
+        target = index + delta
+        if not 0 <= target < len(parent.children):
+            return False
+        parent.children[index], parent.children[target] = (
+            parent.children[target],
+            parent.children[index],
+        )
+        return True
+
+    def add_block(self, direction: str = "column") -> Block:
+        """Добавляет блок в конец полосы (снизу или справа)."""
+        fresh = Block(label="Новый блок", drop_cap=False)
+        if self.root.is_leaf:
+            moved = leaf(self.root.block) if self.root.block else None
+            self.root.block = None
+            self.root.direction = direction
+            self.root.children = [item for item in (moved, leaf(fresh)) if item]
+        elif self.root.direction == direction:
+            self.root.children.append(leaf(fresh))
+        else:
+            inner = Frame(
+                direction=self.root.direction, children=self.root.children, gap=self.root.gap
+            )
+            self.root.direction = direction
+            self.root.children = [inner, leaf(fresh)]
+        return fresh
 
 
 # -------------------------------------------------------------------------- проект
@@ -312,13 +482,35 @@ class Project:
     paper: Paper = field(default_factory=Paper)
     pages: list[Page] = field(default_factory=list)
     articles: list[Article] = field(default_factory=list)
-    page_format: str = "A3"  # A3 | A4
-    orientation: str = "portrait"
-    margins_mm: list[float] = field(default_factory=lambda: [14, 14, 12, 12])
+    page_format: str = "A4"
+    orientation: str = "portrait"  # portrait | landscape
+    custom_size_mm: list[float] = field(default_factory=lambda: [210.0, 297.0])
+    margins_mm: list[float] = field(default_factory=lambda: [9.0, 9.0, 10.0, 10.0])
     grid_columns: int = 6
     grid_gutter_mm: float = 4.0
     created_at: str = field(default_factory=lambda: dt.datetime.now().isoformat(timespec="seconds"))
     saved_at: str = ""
+
+    # -------------------------------------------------------------- лист
+    def sheet_mm(self) -> tuple[float, float]:
+        """Размер листа в миллиметрах с учётом ориентации."""
+        if self.page_format in PAGE_FORMATS:
+            width, height = PAGE_FORMATS[self.page_format]
+        else:
+            width, height = (self.custom_size_mm + [210.0, 297.0])[:2]
+        if self.orientation == "landscape":
+            width, height = height, width
+        return float(width), float(height)
+
+    def sheet_px(self) -> tuple[int, int]:
+        """Размер листа в дизайн-пикселях (96 dpi) — в них рисуется полоса."""
+        width, height = self.sheet_mm()
+        return max(200, round(width * MM_TO_PX)), max(200, round(height * MM_TO_PX))
+
+    def margins_px(self) -> tuple[float, float, float, float]:
+        """Поля листа: верх, низ, лево, право."""
+        values = (list(self.margins_mm) + [9.0, 9.0, 10.0, 10.0])[:4]
+        return tuple(round(max(0.0, value) * MM_TO_PX, 2) for value in values)  # type: ignore[return-value]
 
     # ------------------------------------------------------------ издание
     def inherit(self, publication: "Publication") -> None:
@@ -473,7 +665,7 @@ class Project:
 
     @classmethod
     def from_json_dict(cls, data: dict[str, Any]) -> "Project":
-        return from_dict(cls, data)
+        return from_dict(cls, migrate_project_dict(data))
 
     def clone_for_new_issue(self, number: str, date: str) -> "Project":
         """Новый номер того же издания: оформление наследуется, тексты — нет."""
@@ -486,14 +678,58 @@ class Project:
         copy.articles = []
         for page in copy.pages:
             page.id = new_id("pg")
-            for row in page.rows:
-                row.id = new_id("row")
-                for block in row.blocks:
-                    block.id = new_id("blk")
-                    block.article_id = None
-                    if block.kind == "article":
-                        block.kind = "empty"
+            for frame in page.frames():
+                frame.id = new_id("frm")
+                if frame.block is not None:
+                    frame.block.id = new_id("blk")
+                    frame.block.article_id = None
+                    frame.block.article_part = 0
+                    if frame.block.kind == "article":
+                        frame.block.kind = "empty"
         return copy
+
+
+def migrate_project_dict(data: dict[str, Any]) -> dict[str, Any]:
+    """Читает файлы прошлых версий: плоские строки полосы → дерево блоков."""
+    if not isinstance(data, dict) or not data.get("pages"):
+        return data
+    pages = data["pages"]
+    if not any(isinstance(page, dict) and "rows" in page for page in pages):
+        return data
+    data = dict(data)
+    migrated = []
+    for page in pages:
+        if not isinstance(page, dict) or "rows" not in page:
+            migrated.append(page)
+            continue
+        page = dict(page)
+        rows = page.pop("rows") or []
+        children = []
+        for old_row in rows:
+            cells = [
+                {
+                    "direction": "",
+                    "weight": block.get("weight", 1.0),
+                    "fixed": block.get("fixed_width"),
+                    "block": block,
+                }
+                for block in old_row.get("blocks", [])
+            ]
+            if not cells:
+                continue
+            children.append(
+                {
+                    "direction": "row",
+                    "weight": old_row.get("weight", 1.0),
+                    "fixed": old_row.get("fixed_height"),
+                    "gap": old_row.get("gap", 14.0),
+                    "children": cells,
+                }
+            )
+        page["root"] = {"direction": "column", "gap": 12.0, "children": children}
+        migrated.append(page)
+    data["pages"] = migrated
+    return data
 
 
 @dataclass

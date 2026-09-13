@@ -22,14 +22,11 @@ from ..models import (
     Article,
     Block,
     Brand,
+    Frame,
     ImageRef,
-    MARGIN_H,
-    MARGIN_V,
     ModuleData,
     Page,
     Project,
-    SHEET_HEIGHT,
-    SHEET_WIDTH,
     Style,
     Typography,
 )
@@ -199,6 +196,31 @@ def module_html(
         )
         body = f'<div class="quote-text">{inline_markup(module.text)}</div>' if module.text else hint
         return f'<div class="mod mod-quote">{body}{attribution}</div>'
+    if module.kind == "schedule":
+        filled = [item for item in module.rows if any(cell.strip() for cell in item)]
+        lines = "".join(
+            f'<div class="rate rate-schedule"><span class="rate-key">{esc(item[0])}</span>'
+            f'<span>{esc(item[1] if len(item) > 1 else "")}</span></div>'
+            for item in filled
+        )
+        classes = "mod mod-rates mod-framed" if module.framed else "mod mod-rates"
+        return f'<div class="{classes}">{title}{lines or hint}</div>'
+    if module.kind == "list":
+        filled = [item[0] for item in module.rows if item and item[0].strip()]
+        lines = "".join(f'<div class="mod-item">{inline_markup(item)}</div>' for item in filled)
+        return f'<div class="mod mod-list">{title}{lines or hint}</div>'
+    if module.kind == "fact":
+        if not module.text.strip():
+            return f'<div class="mod mod-fact">{hint}</div>'
+        caption = (
+            f'<div class="fact-caption">{inline_markup(module.attribution)}</div>'
+            if module.attribution
+            else ""
+        )
+        return (
+            f'<div class="mod mod-fact"><div class="fact-number">{esc(module.text)}</div>'
+            f"{caption}</div>"
+        )
     if module.kind == "photo":
         return f'<div class="mod mod-photo">{image_html(module.image, project_dir, 64)}</div>'
     body = f'<div class="mod-text">{inline_markup(module.text)}</div>' if module.text else hint
@@ -276,7 +298,7 @@ def _article_html(
         )
 
     column_style = (
-        f"column-count:{max(1, block.columns)};column-gap:14px;"
+        f"column-count:{max(1, block.columns)};column-gap:{block.column_gap:.1f}px;"
         + ("column-rule:1px solid var(--rule);" if block.column_rules and style.column_rules else "")
         + f"text-align:{'justify' if block.align == 'justify' else block.align};"
         + f"hyphens:{'auto' if block.hyphens else 'manual'};"
@@ -289,19 +311,31 @@ def _article_html(
     return "".join(parts)
 
 
+FRAME_BORDERS = {
+    "hairline": "1px solid var(--rule)",
+    "double": "3px double var(--ink)",
+    "bold": "2px solid var(--ink)",
+}
+
+
 def _block_html(
     block: Block,
     project: Project,
     options: RenderOptions,
     project_dir: Optional[pathlib.Path],
 ) -> str:
-    styles = [f"flex:{block.weight if block.fixed_width is None else '0 0 auto'}"]
-    if block.fixed_width is not None:
-        styles.append(f"width:{block.fixed_width:.1f}px")
+    """Содержимое блока. Размер и место в полосе задаёт узел сетки (Frame)."""
+    styles: list[str] = []
     if block.border_left:
         styles.append("border-left:1px solid var(--ink);padding-left:14px")
     if block.border_top:
         styles.append(f"border-top:{block.border_top}px solid var(--ink);padding-top:8px")
+    if block.frame in FRAME_BORDERS:
+        styles.append(f"border:{FRAME_BORDERS[block.frame]}")
+    if block.tint:
+        styles.append("background:rgba(21,18,14,.06)")
+    if block.padding:
+        styles.append(f"padding:{block.padding:.1f}px")
 
     classes = ["block"]
     selected = options.selected_block_id == block.id and not options.for_export
@@ -342,13 +376,43 @@ def _block_html(
             if not options.for_export
             else '<div class="empty-block-export"></div>'
         )
+    body_scale = ""
+    if abs(block.body_scale - 1.0) > 0.001:
+        body_scale = f"font-size:{project.typography.px('body_pt') * block.body_scale:.2f}px;"
     return (
-        f'<div class="{" ".join(classes)}" data-block="{block.id}" style="{";".join(styles)}">'
-        f"{badge}{inner}</div>"
+        f'<div class="{" ".join(classes)}" data-block="{block.id}" '
+        f'style="{body_scale}{";".join(styles)}">{badge}{inner}</div>'
     )
 
 
-# -------------------------------------------------------------------------- шапка
+def _frame_html(
+    frame: Frame,
+    project: Project,
+    options: RenderOptions,
+    project_dir: Optional[pathlib.Path],
+) -> str:
+    """Рекурсивная сборка дерева сетки в вложенные flex-контейнеры."""
+    sizing = (
+        f"flex:0 0 {frame.fixed:.1f}px" if frame.fixed is not None else f"flex:{frame.weight}"
+    )
+    if frame.is_leaf:
+        if frame.block is None:
+            return ""
+        inner = _block_html(frame.block, project, options, project_dir)
+        return (
+            f'<div class="cell" data-frame="{frame.id}" style="{sizing}">{inner}</div>'
+        )
+    children = "".join(
+        _frame_html(child, project, options, project_dir) for child in frame.children
+    )
+    axis = "row" if frame.direction == "row" else "column"
+    return (
+        f'<div class="cell cell-{axis}" data-frame="{frame.id}" '
+        f'style="{sizing};flex-direction:{axis};gap:{frame.gap:.1f}px">{children}</div>'
+    )
+
+
+# -------------------------------------------------------------------------- шапка# -------------------------------------------------------------------------- шапка
 
 
 def masthead_html(project: Project, page: Page, options_for_export: bool = False) -> str:
@@ -457,6 +521,8 @@ def sheet_css(project: Project, options: RenderOptions) -> str:
     typo: Typography = project.typography
     body_px = typo.px("body_pt")
     heading = fonts.resolve_for_text(typo.heading_font, project.issue.title)
+    sheet_w, sheet_h = project.sheet_px()
+    margin_top, margin_bottom, margin_left, margin_right = project.margins_px()
     return f"""
 :root{{
   --paper:{style.paper_color};--ink:{style.ink_color};--body-ink:{style.body_ink};
@@ -465,9 +531,11 @@ def sheet_css(project: Project, options: RenderOptions) -> str:
 }}
 *{{box-sizing:border-box}}
 html,body{{margin:0;padding:0;background:#101112}}
-.sheet{{position:relative;width:{SHEET_WIDTH}px;height:{SHEET_HEIGHT}px;background:var(--paper);
+.sheet{{position:relative;width:{sheet_w}px;height:{sheet_h}px;background:var(--paper);
   overflow:hidden;font-kerning:normal;text-rendering:optimizeLegibility}}
-.inner{{position:absolute;inset:0;padding:{MARGIN_V}px {MARGIN_H}px;display:flex;flex-direction:column;
+.inner{{position:absolute;inset:0;
+  padding:{margin_top}px {margin_right}px {margin_bottom}px {margin_left}px;
+  display:flex;flex-direction:column;
   {'text-shadow:0 0 .45px rgba(20,16,12,.55);' if style.ink_spread else ''}}}
 .service{{display:flex;justify-content:space-between;align-items:baseline;
   font:400 10px '{typo.caption_font}',sans-serif;color:#453b2e;letter-spacing:.14em;
@@ -491,8 +559,10 @@ html,body{{margin:0;padding:0;background:#101112}}
 .masthead-framed{{border:2px double var(--ink);padding:8px 10px}}
 .running-head{{display:flex;justify-content:space-between;font:400 9px '{typo.caption_font}',sans-serif;
   letter-spacing:.18em;color:var(--faint);border-bottom:1px solid var(--ink);padding-bottom:5px}}
-.stack{{flex:1;display:flex;flex-direction:column;min-height:0;padding-top:12px;gap:10px}}
-.row{{display:flex;min-height:0}}
+.stack{{flex:1;display:flex;flex-direction:column;min-height:0;padding-top:12px}}
+.cell{{display:flex;min-width:0;min-height:0}}
+.cell-row{{flex-direction:row}}
+.cell-column{{flex-direction:column}}
 .block{{position:relative;display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden}}
 .block.selected{{outline:1.5px solid {ACCENT};outline-offset:6px}}
 .block.outlined{{outline:1px dashed rgba(192,91,66,.5);outline-offset:3px}}
@@ -549,6 +619,15 @@ html,body{{margin:0;padding:0;background:#101112}}
 .quote-attr{{font:400 9px '{typo.caption_font}',sans-serif;letter-spacing:.12em;color:var(--faint);margin-top:5px}}
 .mod-photo{{margin-top:auto}}
 .mod-hint{{font:italic 400 10px/1.4 '{typo.body_font}',serif;color:#8a8172}}
+.rate-schedule .rate-key{{font-family:'{typo.caption_font}',sans-serif;letter-spacing:.06em}}
+.mod-list{{font:400 10.5px/1.55 '{typo.body_font}',serif;color:var(--body-ink)}}
+.mod-item{{padding-left:10px;position:relative}}
+.mod-item::before{{content:"—";position:absolute;left:0;color:var(--accent-ink)}}
+.mod-fact{{text-align:center;padding:6px 0;border-top:2px solid var(--ink);
+  border-bottom:2px solid var(--ink)}}
+.fact-number{{font:700 30px/1 '{heading}',serif;color:var(--ink)}}
+.fact-caption{{font:400 9.5px/1.35 '{typo.caption_font}',sans-serif;letter-spacing:.1em;
+  color:var(--faint);margin-top:4px;text-transform:uppercase}}
 .logo-placeholder{{color:#9b9182}}
 .empty-block{{flex:1;display:flex;align-items:center;justify-content:center;
   border:1px dashed rgba(90,81,69,.55);font:400 10px 'IBM Plex Mono',monospace;color:#6b6354;
@@ -564,21 +643,24 @@ html,body{{margin:0;padding:0;background:#101112}}
 
 
 def guides_html(project: Project) -> str:
-    width = SHEET_WIDTH - MARGIN_H * 2
+    top, bottom, left, right = project.margins_px()
+    sheet_w, _ = project.sheet_px()
+    width = sheet_w - left - right
     columns = max(1, project.grid_columns)
     gutter = project.grid_gutter_mm * 96 / 25.4
     step = (width + gutter) / columns
     return (
-        f'<div class="guides"><div style="position:absolute;left:{MARGIN_H}px;right:{MARGIN_H}px;'
-        f"top:{MARGIN_V}px;bottom:{MARGIN_V}px;background:repeating-linear-gradient(to right,"
+        f'<div class="guides"><div style="position:absolute;left:{left}px;right:{right}px;'
+        f"top:{top}px;bottom:{bottom}px;background:repeating-linear-gradient(to right,"
         f"rgba(192,91,66,.5) 0 1px,rgba(192,91,66,0) 1px {step:.2f}px)\"></div></div>"
     )
 
 
-def crop_marks_html() -> str:
+def crop_marks_html(project: Project) -> str:
+    sheet_w, sheet_h = project.sheet_px()
     marks = []
-    for x in (0, SHEET_WIDTH - 12):
-        for y in (0, SHEET_HEIGHT - 12):
+    for x in (0, sheet_w - 12):
+        for y in (0, sheet_h - 12):
             marks.append(f'<div style="left:{x}px;top:{y + 6}px;width:12px;height:1px"></div>')
             marks.append(f'<div style="left:{x + 6}px;top:{y}px;width:1px;height:12px"></div>')
     return f'<div class="crop-marks">{"".join(marks)}</div>'
@@ -594,15 +676,7 @@ def page_body_html(
     project_dir: Optional[pathlib.Path] = None,
 ) -> str:
     page = project.page(page_index)
-    rows_html = []
-    for row in page.rows:
-        style = [f"gap:{row.gap}px"]
-        if row.fixed_height is not None:
-            style.append(f"flex:0 0 {row.fixed_height:.1f}px")
-        else:
-            style.append(f"flex:{row.weight}")
-        blocks = "".join(_block_html(block, project, options, project_dir) for block in row.blocks)
-        rows_html.append(f'<div class="row" data-row="{row.id}" style="{";".join(style)}">{blocks}</div>')
+    grid = _frame_html(page.root, project, options, project_dir)
 
     layers = ""
     if options.show_guides and not options.for_export:
@@ -612,12 +686,12 @@ def page_body_html(
         if aging:
             layers += f'<div style="{aging}"></div>'
     if options.crop_marks:
-        layers += crop_marks_html()
+        layers += crop_marks_html(project)
 
     return (
         '<div class="sheet" id="sheet">'
         f'<div class="inner">{masthead_html(project, page, options.for_export)}'
-        f'<div class="stack">{"".join(rows_html)}</div>'
+        f'<div class="stack">{grid}</div>'
         f"{folio_html(project, page_index)}</div>{layers}</div>"
     )
 
@@ -653,11 +727,12 @@ def issue_document(
     sheets = "".join(
         page_body_html(project, index, options, project_dir) for index in indexes
     )
+    sheet_w, sheet_h = project.sheet_px()
     print_css = (
         "@page{size:%dpx %dpx;margin:0}body{background:#fff}"
         ".sheet{page-break-after:always;break-after:page}"
         ".sheet:last-child{page-break-after:auto;break-after:auto}"
-    ) % (SHEET_WIDTH, SHEET_HEIGHT)
+    ) % (sheet_w, sheet_h)
     return (
         "<!DOCTYPE html><html lang='ru'><head><meta charset='utf-8'><style>"
         + fonts.font_face_css()
