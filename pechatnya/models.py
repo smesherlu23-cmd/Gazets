@@ -434,6 +434,8 @@ class Style:
     masthead_frame: str = "double_rule"
     rubric_caps: bool = True
     ink_spread: bool = True  # text-shadow — имитация растекания краски
+    typography_polish: bool = True  # кавычки-ёлочки, тире, неразрывные пробелы
+    trim_partial_lines: bool = True  # не показывать обрезанную половину строки
     uppercase_headlines: bool = False
     invert_rubrics: bool = False
 

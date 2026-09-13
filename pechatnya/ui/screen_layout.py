@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import flet as ft
 
-from ..models import Article, Block
+from ..models import MM_TO_PX, Article, Block
 from ..presets import MODULE_TITLES, make_module
 from . import common as c
 from . import panels
@@ -139,22 +139,51 @@ class LayoutScreen:
         horizontal = container.direction == "row"
         size_before = rect_before.width if horizontal else rect_before.height
         size_after = rect_after.width if horizontal else rect_after.height
+        span = size_before + size_after
+        if span <= 0:
+            return
+
+        desired = size_before + delta
+        if app.snap_to_grid:
+            desired = self._snap(container, rect_before, desired)
+        desired = max(40.0, min(span - 40.0, desired))
 
         if before.fixed is not None:
-            before.fixed = max(40.0, before.fixed + delta)
+            before.fixed = round(desired, 1)
         elif after.fixed is not None:
-            after.fixed = max(40.0, after.fixed - delta)
+            after.fixed = round(span - desired, 1)
         else:
-            span = size_before + size_after
-            if span <= 0:
-                return
             total = before.weight + after.weight
-            share = max(0.12, min(0.88, (size_before + delta) / span))
+            share = max(0.08, min(0.92, desired / span))
             before.weight = round(total * share, 4)
             after.weight = round(total * (1 - share), 4)
         app.refresh_preview(immediate=True)
 
+    def _snap(self, container, rect_before, desired: float) -> float:
+        """Прижимает границу к модульной сетке: по колонкам или по строкам набора."""
+        project = self.app.project
+        if container.direction == "row":
+            _, _, left, right = project.margins_px()
+            sheet_width, _ = project.sheet_px()
+            columns = max(1, project.grid_columns)
+            gutter = project.grid_gutter_mm * MM_TO_PX
+            content = sheet_width - left - right
+            step = (content + gutter) / columns
+            column_width = step - gutter
+            boundary = rect_before.x + desired
+            candidates = []
+            for index in range(columns + 1):
+                candidates.append(left + index * step)  # левый край колонки
+                candidates.append(left + index * step + column_width)  # правый край
+            nearest = min(candidates, key=lambda value: abs(value - boundary))
+            return nearest - rect_before.x
+        line = project.typography.px("body_pt") * project.typography.leading
+        if line <= 0:
+            return desired
+        return max(line, round(desired / line) * line)
+
     def _block_zone(self, block: Block, fit) -> ft.Control:
+        """Прозрачная зона поверх блока: выделение, двойной щелчок, приём статьи."""
         app = self.app
         selected = app.selected_block_id == block.id
         percent = fit.percent
@@ -610,6 +639,8 @@ def _menu_bar(app: AppState) -> ft.Control:
                 ft.Container(expand=True),
                 view_toggle("Модульная сетка", app.show_guides,
                             lambda _e: _toggle(app, "show_guides")),
+                view_toggle("Привязка", app.snap_to_grid,
+                            lambda _e: _toggle(app, "snap_to_grid")),
                 view_toggle("Бумага", app.show_paper, lambda _e: _toggle(app, "show_paper")),
                 ft.Container(width=1, height=18, bgcolor=t.BORDER_STRONG),
                 ft.Container(

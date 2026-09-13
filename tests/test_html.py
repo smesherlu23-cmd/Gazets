@@ -89,6 +89,7 @@ def test_guides_and_borders_only_in_preview() -> None:
 def test_continuation_splits_text_between_pages() -> None:
     """Остаток статьи печатается на другой полосе со ссылками в обе стороны."""
     project = sample_project()
+    project.style.typography_polish = False  # сравниваем текст как набран
     lead = project.articles[0]
     split_at = 900
 

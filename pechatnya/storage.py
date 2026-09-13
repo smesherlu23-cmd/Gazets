@@ -14,10 +14,10 @@ import pathlib
 import platform
 import shutil
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Iterator, Optional
 
-from .models import ImageRef, Project, Publication
+from .models import Frame, ImageRef, Project, Publication
 from .serde import from_dict, to_dict
 
 PROJECT_SUFFIX = ".pechatnya.json"
@@ -227,6 +227,41 @@ def remember_recent(path: pathlib.Path, project: Project) -> None:
 def forget_recent(path: str) -> None:
     entries = [entry for entry in recent_projects(99) if entry.path != path]
     _write_json(recents_file(), [to_dict(entry) for entry in entries])
+
+
+# --------------------------------------------------------- свои шаблоны сетки
+
+
+@dataclass
+class UserTemplate:
+    """Сетка полосы, сохранённая пользователем для повторного использования."""
+
+    id: str = field(default_factory=lambda: uuid.uuid4().hex[:8])
+    name: str = "Моя сетка"
+    kind: str = "both"  # front | inner | both
+    blocks: int = 0
+    root: Frame = field(default_factory=Frame)
+    created_at: str = field(default_factory=lambda: dt.datetime.now().isoformat(timespec="seconds"))
+
+
+def templates_file() -> pathlib.Path:
+    return app_dir() / "templates.json"
+
+
+def user_templates() -> list[UserTemplate]:
+    raw = _read_json(templates_file(), [])
+    return [from_dict(UserTemplate, item) for item in raw if isinstance(item, dict)]
+
+
+def save_user_template(item: UserTemplate) -> UserTemplate:
+    rest = [other for other in user_templates() if other.id != item.id]
+    _write_json(templates_file(), [to_dict(entry) for entry in [item, *rest]])
+    return item
+
+
+def delete_user_template(template_id: str) -> None:
+    rest = [item for item in user_templates() if item.id != template_id]
+    _write_json(templates_file(), [to_dict(item) for item in rest])
 
 
 # ---------------------------------------------------------- библиотека изданий

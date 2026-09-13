@@ -327,6 +327,20 @@ def build(app: AppState) -> ft.Control:
                     spacing=10,
                 ),
                 c.panel_section(
+                    "Наборная типографика",
+                    c.toggle("Кавычки-ёлочки, тире, неразрывные пробелы",
+                             item.style.typography_polish,
+                             lambda value: _set_style(app, "typography_polish", value)),
+                    c.toggle("Не обрезать строку пополам", item.style.trim_partial_lines,
+                             lambda value: _set_style(app, "trim_partial_lines", value)),
+                    t.hint(
+                        "Текст в статьях остаётся как набран — правки делаются только "
+                        "при вёрстке полосы.",
+                        size=11,
+                    ),
+                    spacing=12,
+                ),
+                c.panel_section(
                     "Приёмы набора",
                     c.toggle("Межколоночные линейки", item.style.column_rules,
                              lambda value: _set_style(app, "column_rules", value)),

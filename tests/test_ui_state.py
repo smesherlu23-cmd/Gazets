@@ -252,3 +252,88 @@ def test_split_needs_a_free_block() -> None:
 
     assert "нет свободного блока" in app.busy_note
     assert app.project.block_of(lead.id, part=1) is None
+
+
+# ------------------------------------------------------------- сетка полосы
+
+
+def test_split_and_remove_block_through_state() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    block = next(app.page_model.blocks())
+    before = len(list(app.page_model.blocks()))
+
+    app.split_block(block.id, "row")
+
+    assert len(list(app.page_model.blocks())) == before + 1
+    assert app.selected_block_id is not None  # новый блок сразу выделен
+    fresh = app.selected_block_id
+
+    app.remove_block(fresh)
+    assert len(list(app.page_model.blocks())) == before
+    assert app.selected_block_id is None
+
+
+def test_page_can_be_duplicated_and_removed() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    pages_before = len(app.project.pages)
+    grid_before = [block.label for block in app.project.pages[0].blocks()]
+
+    app.duplicate_page(0)
+
+    assert len(app.project.pages) == pages_before + 1
+    copy = app.project.pages[1]
+    assert [block.label for block in copy.blocks()] == grid_before
+    # копия не уводит статьи с исходной полосы
+    assert all(block.article_id is None for block in copy.blocks())
+    assert app.project.block_of(app.project.articles[0].id) is not None
+
+    app.remove_page(1)
+    assert len(app.project.pages) == pages_before
+
+
+def test_last_page_is_protected() -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    while len(app.project.pages) > 1:
+        app.remove_page(len(app.project.pages) - 1)
+
+    app.remove_page(0)
+
+    assert len(app.project.pages) == 1
+    assert "хотя бы одна полоса" in app.busy_note
+
+
+def test_page_saved_as_template_can_be_applied(tmp_path) -> None:
+    app = make_app()
+    app.set_project(sample_project())
+    app.current_page = 0
+    labels = [block.label for block in app.page_model.blocks()]
+
+    app.save_page_as_template("Моя передовица")
+
+    saved = storage.user_templates()
+    assert [item.name for item in saved] == ["Моя передовица"]
+    assert saved[0].blocks == len(labels)
+
+    app.current_page = 1  # другая полоса с другой сеткой
+    app.apply_user_template(saved[0].id)
+
+    assert [block.label for block in app.page_model.blocks()] == labels
+    # шаблон не тащит за собой чужие статьи
+    assert all(block.article_id is None for block in app.page_model.blocks())
+
+
+def test_zoom_to_fit_uses_the_sheet_size() -> None:
+    app = make_app()
+    app.project.page_format = "A3"
+
+    app.zoom_to_fit()
+    a3_zoom = app.zoom
+
+    app.project.page_format = "A4"
+    app.zoom_to_fit()
+
+    assert app.zoom > a3_zoom  # меньший лист помещается крупнее
+    assert 0.1 <= a3_zoom <= 2.0

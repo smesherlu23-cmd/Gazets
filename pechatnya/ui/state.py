@@ -18,7 +18,7 @@ from typing import Callable, Optional
 import flet as ft
 
 from .. import storage
-from ..models import Block, BlockFit, Issue, Project, Publication
+from ..models import Block, BlockFit, Frame, Issue, Project, Publication, new_id
 from ..presets import new_project
 from ..serde import from_dict, to_dict
 from ..render.engine import engine, engine_report
@@ -61,6 +61,7 @@ class AppState:
         self.show_guides = True
         self.show_paper = True
         self.show_borders = False
+        self.snap_to_grid = True
 
         self._undo: list[str] = []
         self._redo: list[str] = []
@@ -347,6 +348,59 @@ class AppState:
     def add_block(self, direction: str = "column") -> None:
         fresh = self.page_model.add_block(direction)
         self.selected_block_id = fresh.id
+        self.touch(rebuild=True, immediate=True)
+
+    def save_page_as_template(self, name: str = "") -> None:
+        """Сохраняет сетку текущей полосы, чтобы применять её к другим полосам."""
+        from ..serde import from_dict as _from_dict, to_dict as _to_dict
+
+        page = self.page_model
+        root = _from_dict(Frame, _to_dict(page.root))
+        for frame in root.walk():
+            frame.id = new_id("frm")
+            if frame.block is not None:
+                frame.block.id = new_id("blk")
+                frame.block.article_id = None
+                frame.block.article_part = 0
+                frame.block.modules = []
+                if frame.block.kind != "empty":
+                    frame.block.kind = "empty"
+        template = storage.UserTemplate(
+            name=name or f"Сетка полосы {self.current_page + 1}",
+            kind=page.kind,
+            blocks=sum(1 for _ in root.leaves()),
+            root=root,
+        )
+        storage.save_user_template(template)
+        self.busy_note = f"Сетка сохранена как «{template.name}»"
+        self.rebuild()
+
+    def apply_user_template(self, template_id: str) -> None:
+        template = next(
+            (item for item in storage.user_templates() if item.id == template_id), None
+        )
+        if template is None:
+            return
+        from ..serde import from_dict as _from_dict, to_dict as _to_dict
+
+        page = self.page_model
+        placed = [block.article_id for block in page.blocks() if block.article_id]
+        modules = [block.modules for block in page.blocks() if block.modules]
+        root = _from_dict(Frame, _to_dict(template.root))
+        for frame in root.walk():
+            frame.id = new_id("frm")
+            if frame.block is not None:
+                frame.block.id = new_id("blk")
+        page.root = root
+        page.template_id = f"user:{template.id}"
+        blocks = list(page.blocks())
+        for block, article_id in zip(blocks, placed):
+            block.article_id = article_id
+            block.kind = "article"
+        for block, stack in zip(blocks[len(placed):], modules):
+            block.modules = stack
+            block.kind = "module"
+        self.selected_block_id = None
         self.touch(rebuild=True, immediate=True)
 
     # ------------------------------------------------------------- полосы

@@ -30,6 +30,7 @@ from ..models import (
     Style,
     Typography,
 )
+from . import typo
 from .paper import aging_layer_css
 
 HALFTONE = "repeating-linear-gradient(135deg,#cfc8b6 0 4px,#ddd6c6 4px 8px)"
@@ -59,6 +60,27 @@ FIT_LOGO_JS = """
 """
 
 
+# Блок обрезает текст по границе, и снизу оставалась половина строки — в газете
+# такого не бывает. Скрипт уменьшает высоту набора до целого числа строк.
+TRIM_LINES_JS = """
+<script>
+(() => {
+  const trim = () => document.querySelectorAll('[data-fit]').forEach(node => {
+    const styles = getComputedStyle(node);
+    const line = parseFloat(styles.lineHeight);
+    if (!line || Number.isNaN(line)) return;
+    const box = node.clientHeight;
+    if (!box) return;
+    const lines = Math.floor((box + 0.5) / line);
+    if (lines >= 1) node.style.maxHeight = (lines * line) + 'px';
+  });
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(trim); }
+  trim();
+})();
+</script>
+"""
+
+
 @dataclass
 class RenderOptions:
     """Что показывать поверх набора. При экспорте все флаги выключены."""
@@ -72,8 +94,10 @@ class RenderOptions:
     crop_marks: bool = False
 
 
-def esc(text: str) -> str:
-    return html.escape(text or "", quote=False)
+def esc(text: str, polish: bool = False) -> str:
+    """Экранирование для HTML; ``polish`` включает наборную типографику."""
+    value = typo.apply(text or "") if polish else (text or "")
+    return html.escape(value, quote=False)
 
 
 # ----------------------------------------------------------------- разметка текста
@@ -82,9 +106,9 @@ _BOLD = re.compile(r"\*\*(.+?)\*\*", re.S)
 _ITALIC = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", re.S)
 
 
-def inline_markup(text: str) -> str:
+def inline_markup(text: str, polish: bool = False) -> str:
     """``**жирный**`` и ``*курсив*`` — минимальное форматирование из ТЗ, п. 4.4."""
-    out = esc(text)
+    out = esc(text, polish)
     out = _BOLD.sub(r"<b>\1</b>", out)
     out = _ITALIC.sub(r"<i>\1</i>", out)
     return out
@@ -106,7 +130,7 @@ def split_blocks(body: str) -> list[tuple[str, str]]:
     return result
 
 
-def _drop_cap(paragraph: str, small_caps: bool) -> str:
+def _drop_cap(paragraph: str, small_caps: bool, polish: bool = False) -> str:
     """Первая буква — буквица, дальше первые слова капителью (как в макете)."""
     stripped = paragraph.lstrip()
     if not stripped:
@@ -124,8 +148,8 @@ def _drop_cap(paragraph: str, small_caps: bool) -> str:
                 tail = " " + tail
     return (
         f'<span class="dropcap">{esc(first)}</span>'
-        f'<span class="smallcaps">{inline_markup(opening)}</span>'
-        f"{inline_markup(tail)}"
+        f'<span class="smallcaps">{inline_markup(opening, polish)}</span>'
+        f"{inline_markup(tail, polish)}"
     )
 
 
@@ -141,7 +165,12 @@ def image_css_filter(image: ImageRef) -> str:
     }.get(image.filter, "")
 
 
-def image_html(image: Optional[ImageRef], project_dir: Optional[pathlib.Path], height: int) -> str:
+def image_html(
+    image: Optional[ImageRef],
+    project_dir: Optional[pathlib.Path],
+    height: int,
+    polish: bool = False,
+) -> str:
     """Снимок в блоке: либо файл пользователя, либо полутоновый плейсхолдер."""
     if image is None:
         return ""
@@ -167,7 +196,7 @@ def image_html(image: Optional[ImageRef], project_dir: Optional[pathlib.Path], h
     if image.caption:
         caption = (
             '<div class="caption"><span class="caption-prefix">'
-            f"{esc(image.caption_prefix)} </span>{inline_markup(image.caption)}</div>"
+            f"{esc(image.caption_prefix)} </span>{inline_markup(image.caption, polish)}</div>"
         )
     return f'<figure class="figure">{inner}{caption}</figure>'
 
@@ -176,44 +205,47 @@ def image_html(image: Optional[ImageRef], project_dir: Optional[pathlib.Path], h
 
 
 def module_html(
-    module: ModuleData, project_dir: Optional[pathlib.Path], for_export: bool = False
+    module: ModuleData,
+    project_dir: Optional[pathlib.Path],
+    for_export: bool = False,
+    polish: bool = False,
 ) -> str:
     title = (
-        f'<div class="mod-title">{esc(module.title)}</div>' if module.title else ""
+        f'<div class="mod-title">{esc(module.title, polish)}</div>' if module.title else ""
     )
     hint = "" if for_export else '<div class="mod-hint">заполните в панели «Блок»</div>'
     if module.kind == "rates":
         filled = [row for row in module.rows if any(cell.strip() for cell in row)]
         rows = "".join(
-            f'<div class="rate"><span>{esc(row[0])}</span>'
-            f'<span>{esc(row[1] if len(row) > 1 else "")}</span></div>'
+            f'<div class="rate"><span>{esc(row[0], polish)}</span>'
+            f'<span>{esc(row[1] if len(row) > 1 else "", polish)}</span></div>'
             for row in filled
         )
         return f'<div class="mod mod-rates">{title}{rows or hint}</div>'
     if module.kind == "quote":
         attribution = (
-            f'<div class="quote-attr">{esc(module.attribution)}</div>' if module.attribution else ""
+            f'<div class="quote-attr">{esc(module.attribution, polish)}</div>' if module.attribution else ""
         )
-        body = f'<div class="quote-text">{inline_markup(module.text)}</div>' if module.text else hint
+        body = f'<div class="quote-text">{inline_markup(module.text, polish)}</div>' if module.text else hint
         return f'<div class="mod mod-quote">{body}{attribution}</div>'
     if module.kind == "schedule":
         filled = [item for item in module.rows if any(cell.strip() for cell in item)]
         lines = "".join(
-            f'<div class="rate rate-schedule"><span class="rate-key">{esc(item[0])}</span>'
-            f'<span>{esc(item[1] if len(item) > 1 else "")}</span></div>'
+            f'<div class="rate rate-schedule"><span class="rate-key">{esc(item[0], polish)}</span>'
+            f'<span>{esc(item[1] if len(item) > 1 else "", polish)}</span></div>'
             for item in filled
         )
         classes = "mod mod-rates mod-framed" if module.framed else "mod mod-rates"
         return f'<div class="{classes}">{title}{lines or hint}</div>'
     if module.kind == "list":
         filled = [item[0] for item in module.rows if item and item[0].strip()]
-        lines = "".join(f'<div class="mod-item">{inline_markup(item)}</div>' for item in filled)
+        lines = "".join(f'<div class="mod-item">{inline_markup(item, polish)}</div>' for item in filled)
         return f'<div class="mod mod-list">{title}{lines or hint}</div>'
     if module.kind == "fact":
         if not module.text.strip():
             return f'<div class="mod mod-fact">{hint}</div>'
         caption = (
-            f'<div class="fact-caption">{inline_markup(module.attribution)}</div>'
+            f'<div class="fact-caption">{inline_markup(module.attribution, polish)}</div>'
             if module.attribution
             else ""
         )
@@ -222,8 +254,8 @@ def module_html(
             f"{caption}</div>"
         )
     if module.kind == "photo":
-        return f'<div class="mod mod-photo">{image_html(module.image, project_dir, 64)}</div>'
-    body = f'<div class="mod-text">{inline_markup(module.text)}</div>' if module.text else hint
+        return f'<div class="mod mod-photo">{image_html(module.image, project_dir, 64, polish)}</div>'
+    body = f'<div class="mod-text">{inline_markup(module.text, polish)}</div>' if module.text else hint
     classes = "mod mod-framed" if module.framed else "mod"
     if module.kind == "ad":
         classes += " mod-ad"
@@ -245,22 +277,24 @@ def _article_html(
     continuation = block.article_part == 1
     headline_px = typography.px("lead_headline_pt") * block.headline_scale
     parts: list[str] = []
+    polish = style.typography_polish
     if article.rubric:
         parts.append(f'<div class="rubric">{esc(article.rubric)}</div>')
     title = article.title.upper() if style.uppercase_headlines else article.title
     if continuation:
         parts.append(
             f'<h1 class="headline headline-jump" style="font-size:{headline_px * 0.55:.1f}px">'
-            f"{inline_markup(title)}</h1>"
+            f"{inline_markup(title, polish)}</h1>"
         )
         if from_page:
             parts.append(f'<div class="jump-from">НАЧАЛО НА СТР. {from_page}</div>')
     else:
         parts.append(
-            f'<h1 class="headline" style="font-size:{headline_px:.1f}px">{inline_markup(title)}</h1>'
+            f'<h1 class="headline" style="font-size:{headline_px:.1f}px">'
+            f"{inline_markup(title, polish)}</h1>"
         )
         if article.subtitle:
-            parts.append(f'<div class="lead">{inline_markup(article.subtitle)}</div>')
+            parts.append(f'<div class="lead">{inline_markup(article.subtitle, polish)}</div>')
         byline = " · ".join(item for item in (article.author, article.place_time) if item)
         if byline:
             parts.append(
@@ -272,21 +306,21 @@ def _article_html(
     chunks = split_blocks(article.part_text(block.article_part))
     body_parts: list[str] = []
     figure = (
-        image_html(article.image, project_dir, 96)
+        image_html(article.image, project_dir, 96, polish)
         if article.image and not continuation
         else ""
     )
     for index, (kind, text) in enumerate(chunks):
         if kind == "subhead":
-            body_parts.append(f'<div class="subhead">{esc(text)}</div>')
+            body_parts.append(f'<div class="subhead">{esc(text, polish)}</div>')
         elif kind == "quote":
-            body_parts.append(f'<div class="inset-quote">{inline_markup(text)}</div>')
+            body_parts.append(f'<div class="inset-quote">{inline_markup(text, polish)}</div>')
         elif index == 0 and block.drop_cap and article.drop_cap and not continuation:
             body_parts.append(
-                f'<p class="first">{_drop_cap(text, article.small_caps_opening)}</p>'
+                f'<p class="first">{_drop_cap(text, article.small_caps_opening, polish)}</p>'
             )
         else:
-            body_parts.append(f"<p>{inline_markup(text)}</p>")
+            body_parts.append(f"<p>{inline_markup(text, polish)}</p>")
         if figure and index == min(1, len(chunks) - 1):
             body_parts.append(figure)
             figure = ""
@@ -365,7 +399,8 @@ def _block_html(
         inner = (
             f'<div class="modules js-fit" data-fit="{block.id}">'
             + "".join(
-                module_html(module, project_dir, options.for_export) for module in block.modules
+                module_html(module, project_dir, options.for_export, project.style.typography_polish)
+                for module in block.modules
             )
             + "</div>"
         )
@@ -463,7 +498,7 @@ def masthead_html(project: Project, page: Page, options_for_export: bool = False
         f'text-indent:{tracking:.3f}em">{esc(logo_text)}</div>'
     )
     motto = (
-        f'<div class="motto">{esc(brand.motto)}</div>'
+        f'<div class="motto">{esc(brand.motto, project.style.typography_polish)}</div>'
         if brand.motto_enabled and brand.motto
         else ""
     )
@@ -711,6 +746,7 @@ def page_document(
         + "</style></head><body>"
         + page_body_html(project, page_index, options, project_dir)
         + FIT_LOGO_JS
+        + (TRIM_LINES_JS if project.style.trim_partial_lines else "")
         + "</body></html>"
     )
 
@@ -741,5 +777,6 @@ def issue_document(
         + "</style></head><body>"
         + sheets
         + FIT_LOGO_JS
+        + (TRIM_LINES_JS if project.style.trim_partial_lines else "")
         + "</body></html>"
     )
